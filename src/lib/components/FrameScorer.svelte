@@ -155,7 +155,7 @@
               <td class="py-1 px-2 text-center">
                 {#if result.net > 0}
                   <span class="text-cornholio-gold font-bold">
-                    +{result.net} {result.scoringTeam === 1 ? team1Name.split(' ')[0] : team2Name.split(' ')[0]}
+                    +{result.net} {result.scoringTeam === 1 ? team1Name : team2Name}
                   </span>
                 {:else}
                   <span class="text-tp-cream/25">–</span>
