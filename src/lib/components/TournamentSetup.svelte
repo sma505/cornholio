@@ -211,8 +211,8 @@
       {/if}
     {/if}
 
-    <!-- Best-of Series Settings -->
-    {#if state.settings.format === 'round-robin' || state.settings.format === 'group-playoff'}
+    <!-- Best-of Series Settings (standard mode only) -->
+    {#if state.settings.gameMode === 'standard' && (state.settings.format === 'round-robin' || state.settings.format === 'group-playoff')}
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
         <div>
           <label class="text-tp-cream" for="bestOfGroup">Group / Round Robin</label>
@@ -232,7 +232,7 @@
       </div>
     {/if}
 
-    {#if state.settings.format !== 'round-robin'}
+    {#if state.settings.gameMode === 'standard' && state.settings.format !== 'round-robin'}
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
         <div>
           <label class="text-tp-cream" for="bestOfPlayoff">Playoff Rounds</label>

@@ -19,6 +19,8 @@
   // Determine bestOf for a match based on context
   function getBestOf(match, isFinal = false) {
     const s = tournament.settings
+    // Quick mode: always Bo1
+    if (s.gameMode === 'quick') return 1
     if (isFinal) return s.bestOfFinals || 1
     // Group or round-robin matches use bestOfGroup
     if (match.groupId || s.format === 'round-robin') return s.bestOfGroup || 1
