@@ -468,7 +468,7 @@
         onclick={() => scoringMode[match.id] = 'quick'}
         class="px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer border-none
           {mode === 'quick' ? 'bg-cornholio-gold text-cornholio-dark' : 'text-tp-cream/50 hover:text-tp-cream'}">
-        Quick
+        Total
       </button>
       <button
         onclick={() => scoringMode[match.id] = 'frames'}

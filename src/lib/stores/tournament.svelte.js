@@ -20,7 +20,7 @@ function createDefaultState() {
       pointsToWin: 21,
       skunkRule: false,
       skunkDiff: 13,
-      numFrames: 7,
+      numFrames: 3,
       numGroups: 2,
       advancePerGroup: 2,
       bestOfGroup: 1,
