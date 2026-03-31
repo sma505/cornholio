@@ -20,7 +20,8 @@
   function getBestOf(match, isFinal = false) {
     const s = tournament.settings
     if (isFinal) return s.bestOfFinals || 1
-    if (match.groupId) return s.bestOfGroup || 1
+    // Group or round-robin matches use bestOfGroup
+    if (match.groupId || s.format === 'round-robin') return s.bestOfGroup || 1
     // Bracket match
     return s.bestOfPlayoff || 1
   }

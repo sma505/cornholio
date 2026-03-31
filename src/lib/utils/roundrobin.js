@@ -44,7 +44,7 @@ export function generateRoundRobinSchedule(teamIds) {
     // Remaining matches: pair from opposite ends of the rotating list.
     for (let i = 1; i < n / 2; i++) {
       const team1 = rotating[i];
-      const team2 = rotating[n - 1 - i - 1]; // -1 extra because rotating has length n-1
+      const team2 = rotating[rotating.length - i];
       roundMatches.push([team1, team2]);
     }
 
