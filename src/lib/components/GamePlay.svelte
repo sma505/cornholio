@@ -578,8 +578,13 @@
     <div class="text-tp-cream/30 italic">No bracket data</div>
   {:else if rounds.length === 1}
     <!-- Single round (just the final) -->
-    <div class="flex justify-center">
-      {@render bracketColumn(rounds[0], 'Final')}
+    <div class="flex justify-center min-w-[260px]">
+      <div>
+        <h4 class="text-sm text-cornholio-gold font-heading text-center mb-2">Final</h4>
+        {#each rounds[0].matches as match}
+          {@render bracketMatchCard(match)}
+        {/each}
+      </div>
     </div>
   {:else}
     <!-- Split into left / center (final) / right -->
