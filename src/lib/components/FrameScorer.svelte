@@ -88,11 +88,22 @@
   {/if}
 
   {#if !gameFinished}
+    <!-- Frame explanation (show only before first frame) -->
+    {#if frames.length === 0}
+      <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
+        <p class="text-tp-cream/60 text-xs leading-relaxed">
+          <span class="text-cornholio-gold font-bold">Frame</span> = one round of throwing. Each team throws 4 bags
+          (hole = 3 pts, board = 1 pt). Enter each team's total raw points, then the app calculates the
+          cancellation score (only the difference counts).
+        </p>
+      </div>
+    {/if}
+
     <!-- Frame Entry -->
     <div class="bg-cornholio-navy/50 border border-cornholio-gray-light/30 rounded-lg p-4">
       <div class="text-center text-tp-cream/50 text-xs mb-3">
         Enter each team's <span class="text-tp-cream">raw points</span> for this frame
-        <span class="text-tp-cream/30">(before cancellation, e.g. 3 holes + 1 board = 10)</span>
+        <span class="text-tp-cream/30">(e.g. 2 holes + 1 board = 7)</span>
       </div>
 
       <div class="flex items-center justify-center gap-2">
