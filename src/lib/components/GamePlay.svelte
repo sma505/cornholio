@@ -53,9 +53,9 @@
   // Resolve numFrames for a match based on stage (quick mode)
   function getNumFrames(match) {
     const s = tournament.settings
-    if (isFinalsMatch(match)) return s.numFramesFinals || 7
+    if (isFinalsMatch(match)) return s.numFramesFinals || 3
     if (match.groupId || s.format === 'round-robin') return s.numFramesGroup || 3
-    return s.numFramesPlayoff || 5
+    return s.numFramesPlayoff || 3
   }
 
   function toggleScoringMode(matchId) {
