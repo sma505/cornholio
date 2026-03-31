@@ -543,32 +543,120 @@
   </div>
 {/snippet}
 
-<!-- Bracket view -->
+<!-- Bracket view — centered finals layout -->
 {#snippet bracketView(bracket)}
-  {#if bracket.winners}
-    {@render bracketRounds(bracket.winners)}
-  {:else if bracket.rounds}
-    {@render bracketRounds(bracket.rounds)}
-  {:else if Array.isArray(bracket)}
-    {@render bracketRounds(bracket)}
+  {@const rounds = bracket.winners || bracket.rounds || (Array.isArray(bracket) ? bracket : [])}
+  {#if rounds.length === 0}
+    <div class="text-tp-cream/30 italic">No bracket data</div>
+  {:else if rounds.length === 1}
+    <!-- Single round (just the final) -->
+    <div class="flex justify-center">
+      {@render bracketColumn(rounds[0], 'Final')}
+    </div>
+  {:else}
+    <!-- Split into left / center (final) / right -->
+    {@const finalRound = rounds[rounds.length - 1]}
+    {@const preRounds = rounds.slice(0, rounds.length - 1)}
+    {@const mid = Math.ceil(preRounds[0].matches.length / 2)}
+
+    <div class="flex items-start justify-center gap-2 overflow-x-auto pb-4">
+      <!-- LEFT BRACKET (flows →) -->
+      <div class="flex items-start gap-2">
+        {#each preRounds as round, ri}
+          {@const halfMatches = Math.ceil(round.matches.length / 2)}
+          {@const leftMatches = round.matches.slice(0, halfMatches)}
+          <div class="flex items-start gap-2">
+            <div class="flex flex-col gap-3 min-w-[220px]">
+              {#if ri === 0}
+                <h4 class="text-xs text-cornholio-gold/50 font-heading text-center">
+                  {round.name || `Round ${ri + 1}`}
+                </h4>
+              {/if}
+              {#each leftMatches as match}
+                {@render bracketMatchCard(match)}
+              {/each}
+            </div>
+            {#if ri < preRounds.length - 1}
+              <div class="flex flex-col justify-around self-center">
+                {#each { length: Math.max(1, Math.ceil(leftMatches.length / 2)) } as _}
+                  <div class="w-3 border-t-2 border-cornholio-gold/20 my-6"></div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+
+      <!-- Connector left → final -->
+      <div class="flex flex-col justify-center self-center">
+        <div class="w-4 border-t-2 border-cornholio-gold/30 my-2"></div>
+      </div>
+
+      <!-- CENTER: FINAL -->
+      <div class="flex flex-col items-center min-w-[260px] self-center">
+        <h4 class="text-sm text-cornholio-gold font-heading mb-2">FINAL</h4>
+        {@render bracketMatchCard(finalRound.matches[0])}
+      </div>
+
+      <!-- Connector final → right -->
+      <div class="flex flex-col justify-center self-center">
+        <div class="w-4 border-t-2 border-cornholio-gold/30 my-2"></div>
+      </div>
+
+      <!-- RIGHT BRACKET (flows ←, rendered in reverse order) -->
+      <div class="flex items-start gap-2 flex-row-reverse">
+        {#each preRounds as round, ri}
+          {@const halfMatches = Math.ceil(round.matches.length / 2)}
+          {@const rightMatches = round.matches.slice(halfMatches)}
+          <div class="flex items-start gap-2 flex-row-reverse">
+            <div class="flex flex-col gap-3 min-w-[220px]">
+              {#if ri === 0}
+                <h4 class="text-xs text-cornholio-gold/50 font-heading text-center">
+                  {round.name || `Round ${ri + 1}`}
+                </h4>
+              {/if}
+              {#each rightMatches as match}
+                {@render bracketMatchCard(match)}
+              {/each}
+            </div>
+            {#if ri < preRounds.length - 1}
+              <div class="flex flex-col justify-around self-center">
+                {#each { length: Math.max(1, Math.ceil(rightMatches.length / 2)) } as _}
+                  <div class="w-3 border-t-2 border-cornholio-gold/20 my-6"></div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    </div>
   {/if}
 {/snippet}
 
-<!-- Bracket rounds -->
+<!-- Single bracket match card -->
+{#snippet bracketMatchCard(match)}
+  <div class="bg-cornholio-navy/50 border border-cornholio-gray-light/30 rounded-lg p-3
+    {!match.completed && match.team1Id && match.team2Id ? 'border-cornholio-gold/30' : ''}">
+    {#if match.team1Id && match.team2Id}
+      {@render matchEntry(match, true)}
+    {:else if match.team1Id || match.team2Id}
+      <div class="text-tp-cream/50 text-sm py-1">
+        {teamName(match.team1Id || match.team2Id)} — waiting for opponent...
+      </div>
+    {:else}
+      <div class="text-tp-cream/30 text-sm italic py-2">Waiting for teams...</div>
+    {/if}
+  </div>
+{/snippet}
+
+<!-- Legacy bracket rounds for double-elim (still left-to-right) -->
 {#snippet bracketRounds(rounds)}
   <div class="flex gap-4 overflow-x-auto pb-4">
     {#each rounds as round, ri}
-      <div class="flex flex-col gap-4 min-w-[280px]">
+      <div class="flex flex-col gap-4 min-w-[260px]">
         <h3 class="text-sm text-cornholio-gold/70 font-heading">{round.name || `Round ${ri + 1}`}</h3>
         {#each round.matches as match}
-          <div class="bg-cornholio-navy/50 border border-cornholio-gray-light/30 rounded-lg p-3
-            {!match.completed && match.team1Id && match.team2Id ? 'border-cornholio-gold/30' : ''}">
-            {#if match.team1Id && match.team2Id}
-              {@render matchEntry(match, true)}
-            {:else}
-              <div class="text-tp-cream/30 text-sm italic py-2">Waiting for teams...</div>
-            {/if}
-          </div>
+          {@render bracketMatchCard(match)}
         {/each}
       </div>
       {#if ri < rounds.length - 1}

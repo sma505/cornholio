@@ -91,23 +91,21 @@ export function isSkunk(score1, score2, skunkDiff) {
 }
 
 /**
- * Calculate the result of a single frame from bag counts.
+ * Calculate the cancellation result of a frame from raw points.
  *
- * @param {{ team1Holes: number, team1Boards: number, team2Holes: number, team2Boards: number }} frame
- * @returns {{ team1Raw: number, team2Raw: number, net: number, scoringTeam: 1|2|0 }}
+ * @param {{ team1Pts: number, team2Pts: number }} frame
+ * @returns {{ net: number, scoringTeam: 1|2|0 }}
  */
 export function calculateFrameResult(frame) {
-  const team1Raw = frame.team1Holes * 3 + frame.team1Boards;
-  const team2Raw = frame.team2Holes * 3 + frame.team2Boards;
-  const net = Math.abs(team1Raw - team2Raw);
-  const scoringTeam = team1Raw > team2Raw ? 1 : team2Raw > team1Raw ? 2 : 0;
-  return { team1Raw, team2Raw, net, scoringTeam };
+  const net = Math.abs(frame.team1Pts - frame.team2Pts);
+  const scoringTeam = frame.team1Pts > frame.team2Pts ? 1 : frame.team2Pts > frame.team1Pts ? 2 : 0;
+  return { net, scoringTeam };
 }
 
 /**
  * Calculate running totals from an array of frames using cancellation scoring.
  *
- * @param {{ team1Holes: number, team1Boards: number, team2Holes: number, team2Boards: number }[]} frames
+ * @param {{ team1Pts: number, team2Pts: number }[]} frames
  * @returns {{ score1: number, score2: number }}
  */
 export function calculateRunningTotal(frames) {
@@ -124,7 +122,7 @@ export function calculateRunningTotal(frames) {
 /**
  * Check if a game is complete based on its frames.
  *
- * @param {{ team1Holes: number, team1Boards: number, team2Holes: number, team2Boards: number }[]} frames
+ * @param {{ team1Pts: number, team2Pts: number }[]} frames
  * @param {object} settings
  * @returns {boolean}
  */
@@ -137,22 +135,18 @@ export function isGameComplete(frames, settings = {}) {
 }
 
 /**
- * Validate a frame's bag counts.
+ * Validate a simplified frame (raw points per team).
  *
- * @param {{ team1Holes: number, team1Boards: number, team2Holes: number, team2Boards: number }} frame
+ * @param {{ team1Pts: number, team2Pts: number }} frame
  * @returns {{ valid: boolean, errors: string[] }}
  */
 export function validateFrame(frame) {
   const errors = [];
-  for (const [label, h, b] of [
-    ['Team 1', frame.team1Holes, frame.team1Boards],
-    ['Team 2', frame.team2Holes, frame.team2Boards],
-  ]) {
-    if (!Number.isInteger(h) || h < 0 || h > 4) errors.push(`${label} holes must be 0-4`);
-    if (!Number.isInteger(b) || b < 0 || b > 4) errors.push(`${label} boards must be 0-4`);
-    if (Number.isInteger(h) && Number.isInteger(b) && h + b > 4) {
-      errors.push(`${label} can throw at most 4 bags (${h} holes + ${b} boards = ${h + b})`);
-    }
+  if (!Number.isInteger(frame.team1Pts) || frame.team1Pts < 0 || frame.team1Pts > 12) {
+    errors.push('Team 1 points must be 0-12');
+  }
+  if (!Number.isInteger(frame.team2Pts) || frame.team2Pts < 0 || frame.team2Pts > 12) {
+    errors.push('Team 2 points must be 0-12');
   }
   return { valid: errors.length === 0, errors };
 }
