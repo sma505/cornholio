@@ -53,8 +53,12 @@
     scoringMode[matchId] = getScoringMode(matchId) === 'quick' ? 'frames' : 'quick'
   }
 
-  // Series management
-  function getSeriesForMatch(matchId, bestOf) {
+  // Series management — read-only for templates, lazy-init from event handlers
+  function getSeriesForMatch(matchId) {
+    return seriesState[matchId] || { games: [], currentGame: 1 }
+  }
+
+  function ensureSeriesState(matchId) {
     if (!seriesState[matchId]) {
       seriesState[matchId] = { games: [], currentGame: 1 }
     }
@@ -85,7 +89,13 @@
       // Simple Bo1 — same as before
       if (isBracket) {
         const result = getMatchResult({ ...match, score1, score2 })
-        advanceBracket(tournament.bracket, match.id, score1, score2, result.winnerId, result.loserId)
+        // Store scores on the match first, then advance
+        const found = tournament.bracket.winners?.flatMap(r => r.matches)
+          .concat(tournament.bracket.losers?.flatMap(r => r.matches) || [])
+          .concat(tournament.bracket.finals?.matches || [])
+          .find(m => m.id === match.id)
+        if (found) { found.score1 = score1; found.score2 = score2 }
+        advanceBracket(tournament.bracket, match.id, result.winnerId, result.loserId)
         setBracket(tournament.bracket)
       } else {
         updateMatch(match.id, score1, score2)
@@ -94,7 +104,7 @@
     }
 
     // Best-of series
-    const series = getSeriesForMatch(match.id, bestOf)
+    const series = ensureSeriesState(match.id)
     series.games.push({ score1, score2, frames })
     series.currentGame = series.games.length + 1
 
@@ -104,7 +114,12 @@
       // Store series wins as the match scores
       if (isBracket) {
         const result = getMatchResult({ ...match, score1: w1, score2: w2 })
-        advanceBracket(tournament.bracket, match.id, w1, w2, result.winnerId, result.loserId)
+        const found = tournament.bracket.winners?.flatMap(r => r.matches)
+          .concat(tournament.bracket.losers?.flatMap(r => r.matches) || [])
+          .concat(tournament.bracket.finals?.matches || [])
+          .find(m => m.id === match.id)
+        if (found) { found.score1 = w1; found.score2 = w2 }
+        advanceBracket(tournament.bracket, match.id, result.winnerId, result.loserId)
         setBracket(tournament.bracket)
       } else {
         updateMatch(match.id, w1, w2)
@@ -363,7 +378,7 @@
 <!-- Match entry: handles Bo1 and series, quick and frame modes -->
 {#snippet matchEntry(match, isBracket)}
   {@const bestOf = getMatchBestOf(match)}
-  {@const series = bestOf > 1 ? getSeriesForMatch(match.id, bestOf) : null}
+  {@const series = bestOf > 1 ? getSeriesForMatch(match.id) : null}
   {@const seriesDone = series ? isSeriesComplete(series, bestOf) : false}
 
   <div class="bg-cornholio-navy/50 rounded-lg p-3">
