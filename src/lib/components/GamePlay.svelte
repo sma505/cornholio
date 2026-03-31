@@ -1,5 +1,5 @@
 <script>
-  import { getState, setMatches, setGroups, setBracket, updateMatch, setStep, setChampion } from '../stores/tournament.svelte.js'
+  import { getState, setMatches, setGroups, setBracket, updateMatch, setStep, setChampion, cancelTournament } from '../stores/tournament.svelte.js'
   import { generateRoundRobinSchedule, assignGroups, calculateStandings } from '../utils/roundrobin.js'
   import { generateSingleElimBracket, generateDoubleElimBracket, advanceBracket, getBracketWinner } from '../utils/bracket.js'
   import { validateScore, getMatchResult } from '../utils/scoring.js'
@@ -172,6 +172,16 @@
 
   function viewResults() {
     setStep('results')
+  }
+
+  let showCancelConfirm = $state(false)
+
+  function handleCancel() {
+    showCancelConfirm = true
+  }
+
+  function confirmCancel() {
+    cancelTournament()
   }
 </script>
 
@@ -435,6 +445,44 @@
       >
         VIEW RESULTS
       </button>
+    </div>
+  {/if}
+
+  <!-- Cancel Tournament -->
+  <div class="mt-12 pt-6 border-t border-cornholio-gray-light/20 text-center no-print">
+    <button
+      onclick={handleCancel}
+      class="text-cornholio-red/60 hover:text-cornholio-red text-sm cursor-pointer
+        bg-transparent border-none underline"
+    >
+      Cancel Tournament
+    </button>
+  </div>
+
+  {#if showCancelConfirm}
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div class="bg-cornholio-blue border-2 border-cornholio-gold/50 rounded-xl p-6 max-w-sm mx-4 text-center">
+        <h3 class="text-xl text-cornholio-gold font-heading mb-3">CANCEL TOURNAMENT?</h3>
+        <p class="text-tp-cream/70 text-sm mb-6">
+          All match results will be lost. You'll return to team pairing.
+        </p>
+        <div class="flex gap-3 justify-center">
+          <button
+            onclick={() => showCancelConfirm = false}
+            class="bg-cornholio-gray text-tp-cream font-heading px-6 py-2 rounded-lg
+              hover:bg-cornholio-gray-light transition-all cursor-pointer border border-cornholio-gray-light"
+          >
+            KEEP PLAYING
+          </button>
+          <button
+            onclick={confirmCancel}
+            class="bg-cornholio-red text-white font-heading px-6 py-2 rounded-lg
+              hover:bg-cornholio-red/80 transition-all cursor-pointer"
+          >
+            CANCEL
+          </button>
+        </div>
+      </div>
     </div>
   {/if}
 </div>

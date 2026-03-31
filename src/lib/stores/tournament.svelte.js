@@ -136,6 +136,15 @@ export function setChampion(champion) {
   scheduleSave()
 }
 
+export function cancelTournament() {
+  state.matches = []
+  state.groups = []
+  state.bracket = null
+  state.champion = null
+  state.step = 'teams'
+  scheduleSave()
+}
+
 export function resetTournament() {
   Object.assign(state, createDefaultState())
   saveTournament($state.snapshot(state))

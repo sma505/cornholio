@@ -15,7 +15,18 @@
 
   const allAssigned = $derived(unassigned.length === 0)
   const enoughTeams = $derived(teams.length >= 2)
-  const canProceed = $derived(allAssigned && enoughTeams)
+
+  const groupWarning = $derived(() => {
+    if (tournament.settings.format !== 'group-playoff') return null
+    const numGroups = tournament.settings.numGroups
+    const minTeams = numGroups * 2
+    if (teams.length < minTeams) {
+      return `Group + Playoff with ${numGroups} groups needs at least ${minTeams} teams (you have ${teams.length}). Add more players or reduce groups.`
+    }
+    return null
+  })
+
+  const canProceed = $derived(allAssigned && enoughTeams && !groupWarning())
 
   function generateTeamName(players) {
     if (players.length === 0) return 'Empty Team'
@@ -353,6 +364,9 @@
       {/if}
       {#if !enoughTeams}
         <p class="text-cornholio-red text-sm">Need at least 2 teams to start.</p>
+      {/if}
+      {#if groupWarning()}
+        <p class="text-cornholio-red text-sm">{groupWarning()}</p>
       {/if}
     </div>
   {/if}

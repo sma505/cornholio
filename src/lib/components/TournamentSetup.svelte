@@ -95,7 +95,10 @@
 
     {#if state.settings.format === 'group-playoff'}
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
-        <label class="text-tp-cream" for="numGroups">Number of Groups</label>
+        <div>
+          <label class="text-tp-cream" for="numGroups">Number of Groups</label>
+          <p class="text-tp-cream/50 text-xs">Each group needs at least 2 teams</p>
+        </div>
         <input
           id="numGroups"
           type="number"
@@ -120,6 +123,15 @@
           class="w-20 bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
             text-cornholio-gold text-center font-bold text-lg"
         />
+      </div>
+
+      <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
+        <p class="text-tp-cream/60 text-xs leading-relaxed">
+          <span class="text-cornholio-gold font-bold">Tip:</span>
+          For {state.settings.numGroups} groups you need at least {state.settings.numGroups * 2} teams
+          ({state.settings.numGroups * 2 * 2}+ players). Recommended: {state.settings.numGroups * 3}–{state.settings.numGroups * 4} teams
+          for balanced groups.
+        </p>
       </div>
     {/if}
   </div>
