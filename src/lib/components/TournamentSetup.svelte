@@ -1,5 +1,5 @@
 <script>
-  import { getState, updateSettings, setStep } from '../stores/tournament.svelte.js'
+  import { getState, updateSettings, setStep, setName } from '../stores/tournament.svelte.js'
 
   const state = getState()
 
@@ -41,6 +41,19 @@
 
 <div class="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
   <h1 class="text-4xl md:text-5xl text-cornholio-gold mb-2">TOURNAMENT SETUP</h1>
+
+  <!-- Tournament Name -->
+  <div class="w-full max-w-md mb-6">
+    <input
+      type="text"
+      value={state.name}
+      oninput={(e) => setName(e.target.value)}
+      placeholder="Tournament name..."
+      class="w-full bg-transparent border-b-2 border-cornholio-gold/30 text-tp-white text-center text-lg
+        px-2 py-2 focus:border-cornholio-gold focus:outline-none placeholder-tp-cream/30"
+    />
+  </div>
+
   <p class="text-tp-cream/60 mb-8">Choose your format, mortal.</p>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">

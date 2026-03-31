@@ -1,5 +1,5 @@
 <script>
-  import { getState, resetTournament } from '../stores/tournament.svelte.js'
+  import { getState, goHome } from '../stores/tournament.svelte.js'
   import { exportTournament } from '../utils/persistence.js'
   import { calculateStandings } from '../utils/roundrobin.js'
 
@@ -62,7 +62,7 @@
   }
 
   function handleNewTournament() {
-    resetTournament()
+    goHome()
   }
 </script>
 

@@ -1,6 +1,6 @@
 <script>
   import { getState } from './lib/stores/tournament.svelte.js'
-  import Welcome from './lib/components/Welcome.svelte'
+  import Home from './lib/components/Home.svelte'
   import TournamentSetup from './lib/components/TournamentSetup.svelte'
   import PlayerEntry from './lib/components/PlayerEntry.svelte'
   import TeamPairing from './lib/components/TeamPairing.svelte'
@@ -12,13 +12,13 @@
 </script>
 
 <div class="flex flex-col min-h-dvh">
-  {#if state.step !== 'welcome'}
+  {#if state.step !== 'home'}
     <CornholioHeader currentStep={state.step} />
   {/if}
 
   <main class="flex-1 flex flex-col">
-    {#if state.step === 'welcome'}
-      <Welcome />
+    {#if state.step === 'home'}
+      <Home />
     {:else if state.step === 'setup'}
       <TournamentSetup />
     {:else if state.step === 'players'}

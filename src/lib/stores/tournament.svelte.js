@@ -1,4 +1,4 @@
-import { loadTournament, saveTournament } from '../utils/persistence.js'
+import { loadTournament, saveTournament, migrateOldStorage } from '../utils/persistence.js'
 
 const QUOTES = [
   "I am the Great Cornholio!",
@@ -11,9 +11,14 @@ const QUOTES = [
   "The streets will flow with the blood of the non-believers!",
 ]
 
-function createDefaultState() {
+// Migrate old single-tournament format on first load
+migrateOldStorage()
+
+function createDefaultState(name = 'New Tournament') {
   return {
-    step: 'welcome',
+    id: crypto.randomUUID(),
+    name,
+    step: 'home',
     settings: {
       format: 'round-robin',
       gameMode: 'standard',
@@ -39,12 +44,16 @@ function createDefaultState() {
   }
 }
 
-let state = $state(loadTournament() || createDefaultState())
+let state = $state(createDefaultState())
 let saveTimeout = null
 
 function scheduleSave() {
   if (saveTimeout) clearTimeout(saveTimeout)
-  saveTimeout = setTimeout(() => saveTournament($state.snapshot(state)), 300)
+  saveTimeout = setTimeout(() => {
+    if (state.step !== 'home') {
+      saveTournament($state.snapshot(state))
+    }
+  }, 300)
 }
 
 export function getState() {
@@ -53,6 +62,11 @@ export function getState() {
 
 export function setStep(step) {
   state.step = step
+  scheduleSave()
+}
+
+export function setName(name) {
+  state.name = name
   scheduleSave()
 }
 
@@ -154,13 +168,32 @@ export function cancelTournament() {
 }
 
 export function resetTournament() {
-  Object.assign(state, createDefaultState())
-  saveTournament($state.snapshot(state))
+  const newState = createDefaultState()
+  Object.assign(state, newState)
+}
+
+export function createNewTournament(name) {
+  const newState = createDefaultState(name)
+  Object.assign(state, newState)
+  state.step = 'setup'
+  scheduleSave()
+}
+
+export function loadExistingTournament(id) {
+  const loaded = loadTournament(id)
+  if (loaded) {
+    Object.assign(state, loaded)
+  }
 }
 
 export function loadState(newState) {
+  if (!newState.id) newState.id = crypto.randomUUID()
   Object.assign(state, newState)
   scheduleSave()
+}
+
+export function goHome() {
+  state.step = 'home'
 }
 
 export function getRandomQuote() {

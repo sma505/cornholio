@@ -1,5 +1,5 @@
 <script>
-  import { getRandomQuote } from '../../stores/tournament.svelte.js'
+  import { getRandomQuote, goHome } from '../../stores/tournament.svelte.js'
 
   let { currentStep } = $props()
 
@@ -22,7 +22,14 @@
 
 <header class="bg-cornholio-blue border-b-2 border-cornholio-gold/30 px-4 py-3 no-print">
   <div class="max-w-5xl mx-auto flex items-center justify-between gap-4">
-    <h1 class="text-2xl md:text-3xl text-cornholio-gold m-0">CORNHOLIO</h1>
+    <button
+      onclick={goHome}
+      class="text-2xl md:text-3xl text-cornholio-gold font-heading m-0 bg-transparent border-none
+        cursor-pointer hover:text-cornholio-gold-light transition-colors"
+      title="Back to tournaments"
+    >
+      CORNHOLIO
+    </button>
 
     <nav class="hidden md:flex gap-1">
       {#each steps as step}
