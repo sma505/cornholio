@@ -87,6 +87,33 @@
       </div>
     </div>
 
+    <!-- Default Scoring Mode -->
+    <div class="bg-cornholio-gray/50 rounded-lg p-4">
+      <label class="text-tp-cream text-sm mb-2 block">Default Scoring</label>
+      <div class="flex gap-2">
+        <button
+          onclick={() => updateSettings({ defaultScoringMode: 'quick' })}
+          class="flex-1 py-2 px-3 rounded-lg text-sm font-heading transition-all cursor-pointer border-2
+            {state.settings.defaultScoringMode === 'quick'
+              ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
+              : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
+        >
+          Total
+          <span class="block text-[10px] font-body {state.settings.defaultScoringMode === 'quick' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Enter final score</span>
+        </button>
+        <button
+          onclick={() => updateSettings({ defaultScoringMode: 'frames' })}
+          class="flex-1 py-2 px-3 rounded-lg text-sm font-heading transition-all cursor-pointer border-2
+            {state.settings.defaultScoringMode === 'frames'
+              ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
+              : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
+        >
+          Frame-by-frame
+          <span class="block text-[10px] font-body {state.settings.defaultScoringMode === 'frames' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Enter per frame</span>
+        </button>
+      </div>
+    </div>
+
     {#if state.settings.gameMode === 'standard'}
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
         <label class="text-tp-cream" for="pointsToWin">Points to Win</label>
@@ -121,22 +148,67 @@
         </button>
       </div>
     {:else}
-      <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
-        <div>
-          <label class="text-tp-cream" for="numFrames">Frames per Game</label>
-          <p class="text-tp-cream/50 text-xs">Play fixed frames, highest score wins. Draws possible in groups.</p>
-        </div>
-        <input
-          id="numFrames"
-          type="number"
-          min="3"
-          max="20"
-          value={state.settings.numFrames}
-          oninput={(e) => updateSettings({ numFrames: parseInt(e.target.value) || 7 })}
-          class="w-20 bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
-            text-cornholio-gold text-center font-bold text-lg"
-        />
+      <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3 mb-1">
+        <p class="text-tp-cream/60 text-xs leading-relaxed">
+          <span class="text-cornholio-gold font-bold">Quick Mode:</span>
+          Play a fixed number of frames per game. Highest cancellation score wins. Draws possible in group stage.
+        </p>
       </div>
+
+      {#if state.settings.format === 'round-robin' || state.settings.format === 'group-playoff'}
+        <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
+          <div>
+            <label class="text-tp-cream" for="numFramesGroup">Group / Round Robin</label>
+            <p class="text-tp-cream/50 text-xs">Frames per game</p>
+          </div>
+          <input
+            id="numFramesGroup"
+            type="number"
+            min="1"
+            max="20"
+            value={state.settings.numFramesGroup}
+            oninput={(e) => updateSettings({ numFramesGroup: parseInt(e.target.value) || 3 })}
+            class="w-20 bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
+              text-cornholio-gold text-center font-bold text-lg"
+          />
+        </div>
+      {/if}
+
+      {#if state.settings.format !== 'round-robin'}
+        <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
+          <div>
+            <label class="text-tp-cream" for="numFramesPlayoff">Playoff Rounds</label>
+            <p class="text-tp-cream/50 text-xs">Frames per game</p>
+          </div>
+          <input
+            id="numFramesPlayoff"
+            type="number"
+            min="1"
+            max="20"
+            value={state.settings.numFramesPlayoff}
+            oninput={(e) => updateSettings({ numFramesPlayoff: parseInt(e.target.value) || 5 })}
+            class="w-20 bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
+              text-cornholio-gold text-center font-bold text-lg"
+          />
+        </div>
+
+        <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
+          <div>
+            <label class="text-tp-cream" for="numFramesFinals">Finals / Championship</label>
+            <p class="text-tp-cream/50 text-xs">Frames per game</p>
+          </div>
+          <input
+            id="numFramesFinals"
+            type="number"
+            min="1"
+            max="20"
+            value={state.settings.numFramesFinals}
+            oninput={(e) => updateSettings({ numFramesFinals: parseInt(e.target.value) || 7 })}
+            class="w-20 bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
+              text-cornholio-gold text-center font-bold text-lg"
+          />
+        </div>
+      {/if}
     {/if}
 
     <!-- Best-of Series Settings -->

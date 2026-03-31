@@ -47,7 +47,15 @@
   }
 
   function getScoringMode(matchId) {
-    return scoringMode[matchId] || 'quick'
+    return scoringMode[matchId] || tournament.settings.defaultScoringMode || 'quick'
+  }
+
+  // Resolve numFrames for a match based on stage (quick mode)
+  function getNumFrames(match) {
+    const s = tournament.settings
+    if (isFinalsMatch(match)) return s.numFramesFinals || 7
+    if (match.groupId || s.format === 'round-robin') return s.numFramesGroup || 3
+    return s.numFramesPlayoff || 5
   }
 
   function toggleScoringMode(matchId) {
@@ -261,7 +269,7 @@
       Double Elimination
     {/if}
     &mdash; {tournament.settings.gameMode === 'quick'
-      ? `Quick Mode (${tournament.settings.numFrames} frames)`
+      ? 'Quick Mode'
       : `First to ${tournament.settings.pointsToWin}`}
   </p>
 
@@ -483,7 +491,7 @@
     <FrameScorer
       team1Name={teamName(match.team1Id)}
       team2Name={teamName(match.team2Id)}
-      settings={{ ...tournament.settings, isBracket }}
+      settings={{ ...tournament.settings, isBracket, numFrames: getNumFrames(match) }}
       onGameComplete={(s1, s2, frames) => handleFrameComplete(match, isBracket, s1, s2, frames)}
     />
   {:else}
