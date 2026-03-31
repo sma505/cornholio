@@ -37,7 +37,7 @@
       {/each}
     </nav>
 
-    <p class="text-xs md:text-sm text-cornholio-gold-light italic hidden sm:block max-w-48 text-right">
+    <p class="text-xs md:text-sm text-cornholio-gold-light italic hidden sm:block max-w-48 text-right h-10 overflow-hidden line-clamp-2 flex items-center justify-end">
       "{quote}"
     </p>
   </div>

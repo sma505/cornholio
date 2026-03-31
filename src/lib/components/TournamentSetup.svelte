@@ -93,6 +93,65 @@
       </button>
     </div>
 
+    <!-- Best-of Series Settings -->
+    {#if state.settings.format === 'round-robin' || state.settings.format === 'group-playoff'}
+      <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
+        <div>
+          <label class="text-tp-cream" for="bestOfGroup">Group / Round Robin</label>
+          <p class="text-tp-cream/50 text-xs">Games per matchup</p>
+        </div>
+        <select
+          id="bestOfGroup"
+          value={state.settings.bestOfGroup}
+          onchange={(e) => updateSettings({ bestOfGroup: parseInt(e.target.value) })}
+          class="bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
+            text-cornholio-gold font-bold text-lg cursor-pointer"
+        >
+          <option value={1}>Bo1</option>
+          <option value={3}>Bo3</option>
+          <option value={5}>Bo5</option>
+        </select>
+      </div>
+    {/if}
+
+    {#if state.settings.format !== 'round-robin'}
+      <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
+        <div>
+          <label class="text-tp-cream" for="bestOfPlayoff">Playoff Rounds</label>
+          <p class="text-tp-cream/50 text-xs">Games per playoff matchup</p>
+        </div>
+        <select
+          id="bestOfPlayoff"
+          value={state.settings.bestOfPlayoff}
+          onchange={(e) => updateSettings({ bestOfPlayoff: parseInt(e.target.value) })}
+          class="bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
+            text-cornholio-gold font-bold text-lg cursor-pointer"
+        >
+          <option value={1}>Bo1</option>
+          <option value={3}>Bo3</option>
+          <option value={5}>Bo5</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
+        <div>
+          <label class="text-tp-cream" for="bestOfFinals">Finals / Championship</label>
+          <p class="text-tp-cream/50 text-xs">Games in the final matchup</p>
+        </div>
+        <select
+          id="bestOfFinals"
+          value={state.settings.bestOfFinals}
+          onchange={(e) => updateSettings({ bestOfFinals: parseInt(e.target.value) })}
+          class="bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
+            text-cornholio-gold font-bold text-lg cursor-pointer"
+        >
+          <option value={1}>Bo1</option>
+          <option value={3}>Bo3</option>
+          <option value={5}>Bo5</option>
+        </select>
+      </div>
+    {/if}
+
     {#if state.settings.format === 'group-playoff'}
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
         <div>
