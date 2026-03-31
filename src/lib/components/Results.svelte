@@ -156,13 +156,20 @@
 
 <!-- Standings table snippet -->
 {#snippet standingsTable(rows)}
+  {@const isQuickMode = tournament.settings.gameMode === 'quick'}
   <div class="overflow-x-auto">
     <table class="w-full border-collapse">
       <thead>
         <tr class="bg-cornholio-gray/50 text-tp-cream/80 text-sm">
           <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">#</th>
           <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">Team</th>
+          {#if isQuickMode}
+            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">Pts</th>
+          {/if}
           <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">W</th>
+          {#if isQuickMode}
+            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">D</th>
+          {/if}
           <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">L</th>
           <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">PF</th>
           <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">PA</th>
@@ -177,7 +184,13 @@
               {i === 0 ? 'text-cornholio-gold font-bold' : 'text-tp-white'}">
               {teamName(row.teamId)}
             </td>
+            {#if isQuickMode}
+              <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-cornholio-gold font-bold">{row.points}</td>
+            {/if}
             <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-white">{row.wins}</td>
+            {#if isQuickMode}
+              <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-cream/70">{row.draws}</td>
+            {/if}
             <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-cream/70">{row.losses}</td>
             <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-cream/70">{row.pointsFor}</td>
             <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-cream/70">{row.pointsAgainst}</td>

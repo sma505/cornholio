@@ -134,7 +134,7 @@
     const s1 = parseInt(getScoreInput(match.id, 1))
     const s2 = parseInt(getScoreInput(match.id, 2))
 
-    const { valid, errors: validationErrors } = validateScore(s1, s2, tournament.settings)
+    const { valid, errors: validationErrors } = validateScore(s1, s2, { ...tournament.settings, isBracket })
     if (!valid) {
       errors[match.id] = validationErrors
       return
@@ -259,7 +259,9 @@
     {:else}
       Double Elimination
     {/if}
-    &mdash; First to {tournament.settings.pointsToWin}
+    &mdash; {tournament.settings.gameMode === 'quick'
+      ? `Quick Mode (${tournament.settings.numFrames} frames)`
+      : `First to ${tournament.settings.pointsToWin}`}
   </p>
 
   <!-- ROUND ROBIN -->
@@ -384,14 +386,16 @@
   <div class="bg-cornholio-navy/50 rounded-lg p-3">
     {#if match.completed}
       <!-- Completed match -->
+      {@const isDraw = match.score1 === match.score2}
       <div class="flex flex-wrap items-center gap-2">
-        <span class="flex-1 text-right {match.score1 > match.score2 ? 'text-cornholio-gold font-bold' : 'text-tp-cream/70'}">
+        <span class="flex-1 text-right {isDraw ? 'text-tp-cream' : match.score1 > match.score2 ? 'text-cornholio-gold font-bold' : 'text-tp-cream/70'}">
           {teamName(match.team1Id)}
         </span>
         <span class="px-3 text-tp-white font-bold tabular-nums">
           {match.score1} - {match.score2}
+          {#if isDraw}<span class="text-tp-cream/40 text-xs ml-1">DRAW</span>{/if}
         </span>
-        <span class="flex-1 {match.score2 > match.score1 ? 'text-cornholio-gold font-bold' : 'text-tp-cream/70'}">
+        <span class="flex-1 {isDraw ? 'text-tp-cream' : match.score2 > match.score1 ? 'text-cornholio-gold font-bold' : 'text-tp-cream/70'}">
           {teamName(match.team2Id)}
         </span>
         {#if bestOf > 1}
@@ -478,7 +482,7 @@
     <FrameScorer
       team1Name={teamName(match.team1Id)}
       team2Name={teamName(match.team2Id)}
-      settings={tournament.settings}
+      settings={{ ...tournament.settings, isBracket }}
       onGameComplete={(s1, s2, frames) => handleFrameComplete(match, isBracket, s1, s2, frames)}
     />
   {:else}
@@ -506,13 +510,20 @@
 
 <!-- Standings table -->
 {#snippet standingsTable(rows, highlight = false, advanceCount = 0)}
+  {@const isQuickMode = tournament.settings.gameMode === 'quick'}
   <div class="overflow-x-auto">
     <table class="w-full border-collapse text-sm">
       <thead>
         <tr class="bg-cornholio-gray/50 text-tp-cream/80">
           <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">#</th>
           <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">Team</th>
+          {#if isQuickMode}
+            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">Pts</th>
+          {/if}
           <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">W</th>
+          {#if isQuickMode}
+            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">D</th>
+          {/if}
           <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">L</th>
           <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">PF</th>
           <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">PA</th>
@@ -528,7 +539,13 @@
               {(i === 0 && highlight) || (advanceCount > 0 && i < advanceCount) ? 'text-cornholio-gold font-bold' : 'text-tp-white'}">
               {teamName(row.teamId)}
             </td>
+            {#if isQuickMode}
+              <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-cornholio-gold font-bold">{row.points}</td>
+            {/if}
             <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-white">{row.wins}</td>
+            {#if isQuickMode}
+              <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-cream/70">{row.draws}</td>
+            {/if}
             <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-cream/70">{row.losses}</td>
             <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-cream/70">{row.pointsFor}</td>
             <td class="text-center px-3 py-2 border border-cornholio-gray-light/30 text-tp-cream/70">{row.pointsAgainst}</td>

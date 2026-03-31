@@ -1,7 +1,10 @@
 <script>
-  import { calculateFrameResult, calculateRunningTotal, isGameComplete, validateFrame } from '../utils/scoring.js'
+  import { calculateFrameResult, calculateRunningTotal, calculateRawTotal, isGameComplete, validateFrame } from '../utils/scoring.js'
 
   let { team1Name, team2Name, settings, onGameComplete } = $props()
+
+  const isQuick = $derived(settings.gameMode === 'quick')
+  const totalFrames = $derived(settings.numFrames || 7)
 
   let frames = $state([])
   let input1 = $state('')
@@ -49,18 +52,40 @@
     <div class="flex items-center justify-center gap-4">
       <div class="text-center min-w-0">
         <div class="text-tp-cream text-xs mb-0.5 truncate">{team1Name}</div>
-        <div class="text-4xl font-bold tabular-nums {totals.score1 >= (settings.pointsToWin || 21) - 5 ? 'text-cornholio-gold-light' : 'text-cornholio-gold'}">{totals.score1}</div>
+        <div class="text-4xl font-bold tabular-nums text-cornholio-gold">{totals.score1}</div>
       </div>
       <div class="text-tp-cream/20 text-2xl font-light">–</div>
       <div class="text-center min-w-0">
         <div class="text-tp-cream text-xs mb-0.5 truncate">{team2Name}</div>
-        <div class="text-4xl font-bold tabular-nums {totals.score2 >= (settings.pointsToWin || 21) - 5 ? 'text-cornholio-gold-light' : 'text-cornholio-gold'}">{totals.score2}</div>
+        <div class="text-4xl font-bold tabular-nums text-cornholio-gold">{totals.score2}</div>
       </div>
     </div>
     <div class="text-center text-tp-cream/30 text-[10px] mt-1">
-      First to {settings.pointsToWin || 21}
+      {#if isQuick}
+        {#if frames.length < totalFrames}
+          Frame {frames.length} of {totalFrames}
+        {:else}
+          {totalFrames} frames played{totals.score1 === totals.score2 && settings.isBracket ? ' — sudden death!' : ''}
+        {/if}
+        {#if frames.length > 0}
+          {@const raw = calculateRawTotal(frames)}
+          <span class="text-tp-cream/20 ml-2">(raw: {raw.raw1} – {raw.raw2})</span>
+        {/if}
+      {:else}
+        First to {settings.pointsToWin || 21}
+      {/if}
     </div>
   </div>
+
+  {#if isQuick && frames.length > 0}
+    <!-- Progress bar for quick mode -->
+    <div class="h-1.5 bg-cornholio-dark/50 rounded-full overflow-hidden">
+      <div
+        class="h-full bg-cornholio-gold transition-all duration-300 rounded-full"
+        style="width: {Math.min(100, (frames.length / totalFrames) * 100)}%"
+      ></div>
+    </div>
+  {/if}
 
   {#if !gameFinished}
     <!-- Frame Entry -->

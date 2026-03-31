@@ -123,7 +123,7 @@ export function calculateStandings(matches, teamIds) {
   const stats = Object.fromEntries(
     teamIds.map((id) => [
       id,
-      { teamId: id, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, differential: 0 },
+      { teamId: id, wins: 0, draws: 0, losses: 0, points: 0, pointsFor: 0, pointsAgainst: 0, differential: 0 },
     ])
   );
 
@@ -147,15 +147,20 @@ export function calculateStandings(matches, teamIds) {
     } else if (score2 > score1) {
       if (stats[team2Id]) stats[team2Id].wins++;
       if (stats[team1Id]) stats[team1Id].losses++;
+    } else {
+      if (stats[team1Id]) stats[team1Id].draws++;
+      if (stats[team2Id]) stats[team2Id].draws++;
     }
   }
 
   const standings = Object.values(stats);
   for (const s of standings) {
     s.differential = s.pointsFor - s.pointsAgainst;
+    s.points = s.wins * 3 + s.draws * 1;
   }
 
   standings.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
     if (b.wins !== a.wins) return b.wins - a.wins;
     if (b.differential !== a.differential) return b.differential - a.differential;
     return b.pointsFor - a.pointsFor;
