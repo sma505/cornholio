@@ -414,6 +414,19 @@
         </div>
       {/each}
     {:else}
+      <details class="mb-6 group">
+        <summary class="text-sm text-cornholio-gold/60 hover:text-cornholio-gold cursor-pointer select-none transition-colors">
+          Group Standings ▸
+        </summary>
+        <div class="mt-3 space-y-4">
+          {#each tournament.groups as group}
+            <div>
+              <h3 class="text-sm text-cornholio-gold/80 mb-2">{group.name}</h3>
+              {@render standingsTable(groupStandings(group), true, tournament.settings.advancePerGroup)}
+            </div>
+          {/each}
+        </div>
+      </details>
       <h2 class="text-xl text-cornholio-gold mb-4">Playoff Bracket</h2>
       {@render bracketView(tournament.bracket)}
     {/if}
@@ -491,21 +504,32 @@
       <div class="text-[10px] text-cornholio-gold/50 mb-1">Court {match.court}</div>
     {/if}
     {#if match.completed}
-      <!-- Completed match -->
+      <!-- Completed match — stacked bracket card -->
       {@const isDraw = match.score1 === match.score2}
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="flex-1 text-right {isDraw ? 'text-tp-cream' : match.score1 > match.score2 ? 'text-cornholio-gold font-bold' : 'text-tp-cream/70'}">
-          {teamName(match.team1Id)}
-        </span>
-        <span class="px-3 text-tp-white font-bold tabular-nums">
-          {match.score1} - {match.score2}
-          {#if isDraw}<span class="text-tp-cream/40 text-xs ml-1">DRAW</span>{/if}
-        </span>
-        <span class="flex-1 {isDraw ? 'text-tp-cream' : match.score2 > match.score1 ? 'text-cornholio-gold font-bold' : 'text-tp-cream/70'}">
-          {teamName(match.team2Id)}
-        </span>
+      {@const t1Won = match.score1 > match.score2}
+      {@const t2Won = match.score2 > match.score1}
+      <div class="flex flex-col gap-0 rounded overflow-hidden">
+        <div class="flex items-center justify-between px-3 py-2 {t1Won ? 'bg-cornholio-gold/15' : 'bg-cornholio-dark/40'}">
+          <span class="truncate mr-2 text-sm {t1Won ? 'text-cornholio-gold font-bold' : isDraw ? 'text-tp-cream' : 'text-tp-cream/60'}">
+            {teamName(match.team1Id)}
+          </span>
+          <span class="tabular-nums font-bold text-sm shrink-0 {t1Won ? 'text-cornholio-gold' : isDraw ? 'text-tp-white' : 'text-tp-cream/60'}">
+            {match.score1}
+          </span>
+        </div>
+        <div class="flex items-center justify-between px-3 py-2 {t2Won ? 'bg-cornholio-gold/15' : 'bg-cornholio-dark/40'}">
+          <span class="truncate mr-2 text-sm {t2Won ? 'text-cornholio-gold font-bold' : isDraw ? 'text-tp-cream' : 'text-tp-cream/60'}">
+            {teamName(match.team2Id)}
+          </span>
+          <span class="tabular-nums font-bold text-sm shrink-0 {t2Won ? 'text-cornholio-gold' : isDraw ? 'text-tp-white' : 'text-tp-cream/60'}">
+            {match.score2}
+          </span>
+        </div>
+        {#if isDraw}
+          <div class="text-center text-tp-cream/40 text-xs py-1 bg-cornholio-dark/40">DRAW</div>
+        {/if}
         {#if bestOf > 1}
-          <span class="w-full text-center text-tp-cream/40 text-xs">Series (Bo{bestOf})</span>
+          <div class="text-center text-tp-cream/40 text-xs py-1 bg-cornholio-dark/40">Series (Bo{bestOf})</div>
         {/if}
       </div>
     {:else if bestOf > 1 && !seriesDone}
@@ -516,12 +540,12 @@
       {@const needed = seriesWinsNeeded(bestOf)}
 
       <div class="mb-3">
-        <div class="flex items-center justify-between text-sm">
-          <span class="text-tp-cream">{teamName(match.team1Id)}</span>
-          <span class="text-cornholio-gold font-heading">
+        <div class="flex items-center justify-between text-sm gap-2">
+          <span class="text-tp-cream min-w-0 truncate flex-1 text-right">{teamName(match.team1Id)}</span>
+          <span class="text-cornholio-gold font-heading shrink-0 whitespace-nowrap">
             Bo{bestOf} &mdash; Game {gameNum}
           </span>
-          <span class="text-tp-cream">{teamName(match.team2Id)}</span>
+          <span class="text-tp-cream min-w-0 truncate flex-1">{teamName(match.team2Id)}</span>
         </div>
         <div class="flex items-center justify-between mt-1">
           <div class="flex gap-1">
@@ -572,27 +596,28 @@
       onGameComplete={(s1, s2, frames) => handleFrameComplete(match, isBracket, s1, s2, frames)}
     />
   {:else}
-    <div class="flex items-center justify-center gap-2">
-      <div class="text-center min-w-0">
-        <div class="text-tp-cream text-xs mb-1 truncate">{teamName(match.team1Id)}</div>
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between gap-2">
+        <div class="text-tp-cream text-xs truncate flex-1 text-right whitespace-nowrap">{teamName(match.team1Id)}</div>
+        <span class="text-tp-cream/50 text-xs shrink-0">vs</span>
+        <div class="text-tp-cream text-xs truncate flex-1 whitespace-nowrap">{teamName(match.team2Id)}</div>
+      </div>
+      <div class="flex items-center justify-center gap-2">
         <input type="number" min="0"
           value={getScoreInput(match.id, 1)}
           oninput={(e) => setScoreInput(match.id, 1, e.target.value)}
           class="w-16 bg-cornholio-dark border border-cornholio-gold/50 rounded px-2 py-1 text-cornholio-gold text-center" />
-      </div>
-      <span class="text-tp-cream/50 text-sm mt-4">vs</span>
-      <div class="text-center min-w-0">
-        <div class="text-tp-cream text-xs mb-1 truncate">{teamName(match.team2Id)}</div>
+        <span class="text-tp-cream/50 text-sm">-</span>
         <input type="number" min="0"
           value={getScoreInput(match.id, 2)}
           oninput={(e) => setScoreInput(match.id, 2, e.target.value)}
           class="w-16 bg-cornholio-dark border border-cornholio-gold/50 rounded px-2 py-1 text-cornholio-gold text-center" />
+        <button onclick={() => submitQuickScore(match, isBracket)}
+          class="bg-cornholio-gold text-cornholio-dark font-heading px-4 py-1 rounded
+            hover:bg-cornholio-gold-light transition-colors cursor-pointer text-sm">
+          Submit
+        </button>
       </div>
-      <button onclick={() => submitQuickScore(match, isBracket)}
-        class="bg-cornholio-gold text-cornholio-dark font-heading px-4 py-1 rounded mt-4
-          hover:bg-cornholio-gold-light transition-colors cursor-pointer text-sm">
-        Submit
-      </button>
     </div>
   {/if}
 {/snippet}
@@ -656,8 +681,8 @@
     <div class="text-tp-cream/30 italic">No bracket data</div>
   {:else if rounds.length === 1}
     <!-- Single round (just the final) -->
-    <div class="flex justify-center min-w-[200px] max-w-[320px] flex-1">
-      <div>
+    <div class="flex justify-center max-w-sm w-full mx-auto">
+      <div class="w-full">
         <h4 class="text-sm text-cornholio-gold font-heading text-center mb-2">Final</h4>
         {#each rounds[0].matches as match}
           {@render bracketMatchCard(match)}
