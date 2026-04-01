@@ -165,7 +165,8 @@ export function cancelTournament() {
   state.groups = []
   state.bracket = null
   state.champion = null
-  state.step = 'teams'
+  state.teams = []
+  state.step = state.settings.tournamentType === 'singles' ? 'players' : 'teams'
   scheduleSave()
 }
 
