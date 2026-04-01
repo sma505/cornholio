@@ -11,6 +11,30 @@
   let errors = $state({})
   let scoringMode = $state({}) // matchId -> 'quick' | 'frames'
   let seriesState = $state({}) // matchId -> { games: [...], currentGame: number }
+  let selectedCourt = $state(0) // 0 = All, 1..N = specific court
+
+  const numCourts = $derived(tournament.settings.numCourts || 1)
+
+  // Assign courts to unplayed matches (round-robin distribution)
+  function assignCourts(matches) {
+    if (numCourts <= 1) return
+    let courtIdx = 0
+    for (const match of matches) {
+      if (!match.completed && !match.court) {
+        match.court = (courtIdx % numCourts) + 1
+        courtIdx++
+      }
+    }
+  }
+
+  // Reassign freed court to next waiting match
+  function reassignCourt(completedMatchCourt) {
+    if (numCourts <= 1) return
+    const waiting = tournament.matches.find(m => !m.completed && !m.court)
+    if (waiting) {
+      waiting.court = completedMatchCourt
+    }
+  }
 
   function teamName(id) {
     return tournament.teams.find(t => t.id === id)?.name || 'BYE'
@@ -192,6 +216,10 @@
     if (format === 'double-elim' && !tournament.bracket) {
       setBracket(generateDoubleElimBracket(tournament.teams.map(t => t.id)))
     }
+    // Assign courts to matches
+    if (tournament.matches.length > 0) {
+      assignCourts(tournament.matches)
+    }
   })
 
   // Group phase → playoff transition
@@ -255,6 +283,11 @@
     if (standings.length > 0) setChampion(standings[0].teamId)
   }
 
+  function filterByCourt(matches) {
+    if (selectedCourt === 0 || numCourts <= 1) return matches
+    return matches.filter(m => m.court === selectedCourt || m.completed)
+  }
+
   let showCancelConfirm = $state(false)
 </script>
 
@@ -275,6 +308,37 @@
       : `First to ${tournament.settings.pointsToWin}`}
   </p>
 
+  <!-- Court Tabs -->
+  {#if numCourts > 1}
+    <div class="flex gap-2 mb-6 overflow-x-auto no-print">
+      <button
+        onclick={() => selectedCourt = 0}
+        class="px-4 py-2 rounded-lg text-sm font-heading transition-all cursor-pointer border-2
+          {selectedCourt === 0
+            ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
+            : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
+      >
+        All
+      </button>
+      {#each { length: numCourts } as _, i}
+        {@const courtNum = i + 1}
+        {@const activeCount = tournament.matches.filter(m => m.court === courtNum && !m.completed).length}
+        <button
+          onclick={() => selectedCourt = courtNum}
+          class="px-4 py-2 rounded-lg text-sm font-heading transition-all cursor-pointer border-2
+            {selectedCourt === courtNum
+              ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
+              : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
+        >
+          Court {courtNum}
+          {#if activeCount > 0}
+            <span class="ml-1 text-xs opacity-70">({activeCount})</span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+  {/if}
+
   <!-- ROUND ROBIN -->
   {#if tournament.settings.format === 'round-robin'}
     <div class="space-y-6 mb-8">
@@ -282,7 +346,7 @@
         <div>
           <h2 class="text-xl text-cornholio-gold mb-3">Round {round}</h2>
           <div class="space-y-3">
-            {#each matches as match}
+            {#each filterByCourt(matches) as match}
               {@render matchEntry(match, false)}
             {/each}
           </div>
@@ -314,7 +378,7 @@
         <div class="mb-8">
           <h2 class="text-xl text-cornholio-gold mb-3">{group.name}</h2>
           <div class="space-y-3 mb-4">
-            {#each tournament.matches.filter(m => m.groupId === group.id) as match}
+            {#each filterByCourt(tournament.matches.filter(m => m.groupId === group.id)) as match}
               {@render matchEntry(match, false)}
             {/each}
           </div>

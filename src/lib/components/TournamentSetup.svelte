@@ -54,6 +54,35 @@
     />
   </div>
 
+  <!-- Tournament Type -->
+  <div class="w-full max-w-md mb-6">
+    <div class="bg-cornholio-gray/50 rounded-lg p-4">
+      <label class="text-tp-cream text-sm mb-2 block">Tournament Type</label>
+      <div class="flex gap-2">
+        <button
+          onclick={() => updateSettings({ tournamentType: 'teams', numCourts: 1 })}
+          class="flex-1 py-2 px-3 rounded-lg text-sm font-heading transition-all cursor-pointer border-2
+            {state.settings.tournamentType === 'teams'
+              ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
+              : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
+        >
+          Teams
+          <span class="block text-[10px] font-body {state.settings.tournamentType === 'teams' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Pairs of 2 players</span>
+        </button>
+        <button
+          onclick={() => updateSettings({ tournamentType: 'singles', numCourts: 2 })}
+          class="flex-1 py-2 px-3 rounded-lg text-sm font-heading transition-all cursor-pointer border-2
+            {state.settings.tournamentType === 'singles'
+              ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
+              : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
+        >
+          Singles
+          <span class="block text-[10px] font-body {state.settings.tournamentType === 'singles' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">1v1 matchups</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <p class="text-tp-cream/60 mb-8">Choose your format, mortal.</p>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
@@ -324,6 +353,28 @@
         </p>
       </div>
     {/if}
+  </div>
+
+  <!-- Courts -->
+  <div class="w-full max-w-md mb-8">
+    <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
+      <div>
+        <label class="text-tp-cream" for="numCourts">Number of Courts</label>
+        <p class="text-tp-cream/50 text-xs">
+          {state.settings.numCourts > 1 ? `${state.settings.numCourts} matches can run in parallel` : 'One match at a time'}
+        </p>
+      </div>
+      <input
+        id="numCourts"
+        type="number"
+        min="1"
+        max="8"
+        value={state.settings.numCourts}
+        oninput={(e) => updateSettings({ numCourts: parseInt(e.target.value) || 1 })}
+        class="w-20 bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
+          text-cornholio-gold text-center font-bold text-lg"
+      />
+    </div>
   </div>
 
   <button

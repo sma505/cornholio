@@ -1,8 +1,11 @@
 <script>
-  import { getState, addPlayer, removePlayer, setStep } from '../stores/tournament.svelte.js'
+  import { getState, addPlayer, removePlayer, setStep, createTeamsFromPlayers } from '../stores/tournament.svelte.js'
 
   const tournament = getState()
   let newName = $state('')
+
+  const isSingles = $derived(tournament.settings.tournamentType === 'singles')
+  const minPlayers = $derived(isSingles ? 2 : 3)
 
   function handleAdd() {
     const name = newName.trim()
@@ -17,16 +20,20 @@
   }
 
   function next() {
-    if (tournament.players.length >= 3) {
-      setStep('teams')
+    if (tournament.players.length >= minPlayers) {
+      if (isSingles) {
+        // Skip team pairing — auto-create 1-player teams
+        createTeamsFromPlayers()
+        setStep('play')
+      } else {
+        setStep('teams')
+      }
     }
   }
 
   function back() {
     setStep('setup')
   }
-
-  const minPlayers = 3
 </script>
 
 <div class="flex-1 flex flex-col items-center px-4 py-8 max-w-2xl mx-auto w-full">

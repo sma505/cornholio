@@ -20,6 +20,8 @@ function createDefaultState(name = 'New Tournament') {
     name,
     step: 'home',
     settings: {
+      tournamentType: 'teams',
+      numCourts: 1,
       format: 'round-robin',
       gameMode: 'standard',
       pointsToWin: 21,
@@ -170,6 +172,15 @@ export function cancelTournament() {
 export function resetTournament() {
   const newState = createDefaultState()
   Object.assign(state, newState)
+}
+
+export function createTeamsFromPlayers() {
+  state.teams = state.players.map(name => ({
+    id: crypto.randomUUID(),
+    name,
+    players: [name],
+  }))
+  scheduleSave()
 }
 
 export function createNewTournament(name) {
