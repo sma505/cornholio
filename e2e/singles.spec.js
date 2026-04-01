@@ -41,7 +41,7 @@ test.describe('Singles Tournament', () => {
     await clickNext(page)
     await expect(page.getByText('GAME ON!')).toBeVisible()
     await expect(page.getByText('Single Elimination')).toBeVisible()
-    await expect(page.getByText('FINAL')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Final' })).toBeVisible()
   })
 
   test('singles defaults to 2 courts', async ({ page }) => {

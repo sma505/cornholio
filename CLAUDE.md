@@ -44,9 +44,11 @@ Navigation:
 
 ### Tournament Formats
 1. **Round Robin** — all teams/players play each other
-2. **Group + Playoff** — group stage round-robin, top advance to single-elimination bracket (centered layout: finals in center, semis on left/right)
-3. **Single Elimination** — standard bracket with byes (centered layout)
+2. **Group + Playoff** — group stage round-robin, top advance to single-elimination bracket
+3. **Single Elimination** — standard bracket with byes (left-to-right layout, mobile stacks vertically)
 4. **Double Elimination** — winners/losers brackets + grand finals (left-to-right layout)
+
+Bracket layout: all bracket formats use left-to-right flow on desktop (Round 1 → ... → Final), vertical stack on mobile (<768px). Bye matches show as "Player — bye".
 
 ### Game Modes
 - **Standard**: Play until one team reaches `pointsToWin` (default 21). Optional skunk rule. Best-of series configurable per stage (Bo1/3/5).
@@ -56,14 +58,16 @@ Navigation:
 - Configurable court count (1-8, default 1 for teams, 2 for singles)
 - Court tabs in GamePlay when `numCourts > 1` (All / Court 1 / Court 2 / ...)
 - Auto-assignment of matches to courts (round-robin distribution for RR/group matches, playability-based for brackets)
-- Court badge shown on bracket match cards
+- Court badge shown on all match cards (bracket and RR/group) when multi-court enabled, including completed matches
 - Non-selected court matches dimmed in bracket view, filtered in RR/group view
 - Courts reassigned when matches complete
 
 ### Scoring
 - **Cancellation scoring**: 3pts for hole, 1pt for board, only net differential counts per frame
-- **Two entry modes per match** (toggle: "Total" / "Frame-by-frame"): Total enters final scores directly; Frame-by-frame enters raw points per team per frame with live cancellation preview
-- **Default scoring mode**: Configurable in setup (applies to all matches, overridable per match)
+- **Two entry modes** (set at tournament creation, not changeable during play):
+  - **Total**: Enter final cancelled scores directly
+  - **Frame-by-frame**: Enter raw points per team per frame with live cancellation preview
+- **Scoring mode**: Configured in TournamentSetup via `defaultScoringMode` setting ('quick' = Total, 'frames' = Frame-by-frame). Explanation hint shown inline on setup page.
 - **Draw support** (quick mode): Standings use football-style points (3W/1D/0L), sorted by points → wins → differential
 
 ### Settings Shape
@@ -143,10 +147,16 @@ e2e/
 - Court assignment: call `assignCourts()` before `setMatches()`, call `assignBracketCourts()` after bracket generation and after each bracket match completion
 
 ## Testing
-- **Unit tests** (Vitest): `npm run test:run` — 89 tests covering scoring, round-robin, bracket logic
+- **Unit tests** (Vitest): `npm run test:run` — 178 tests covering scoring, round-robin, bracket logic
 - **E2E tests** (Playwright Test): `npm run test:e2e` — 28 tests covering all tournament flows
-- **NixOS**: Playwright browsers provided via flake (`PLAYWRIGHT_BROWSERS_PATH` set in devShell)
 - **CI**: GitHub Actions deploys on push to main (tests not yet in CI — add `.github/workflows/test.yml`)
+
+### NixOS + Playwright Setup
+- Playwright browsers are provided by the Nix flake via `playwright-driver.browsers`
+- **Important**: `PLAYWRIGHT_BROWSERS_PATH` must NOT be exported globally in the devShell — it gets inherited by the MCP Playwright plugin process, which then tries to `mkdir` inside the read-only Nix store and crashes
+- Instead, `flake.nix` exports `NIX_PLAYWRIGHT_BROWSERS_PATH` and the npm scripts in `package.json` set `PLAYWRIGHT_BROWSERS_PATH=$NIX_PLAYWRIGHT_BROWSERS_PATH` inline when invoking `playwright test`
+- The MCP Playwright plugin (for Claude Code visual verification) uses `google-chrome-stable` from the system PATH via `--executable-path` in its `.mcp.json` config — it does NOT use the Nix-provided browsers
+- Vite's file watcher excludes `.direnv/` (configured in `vite.config.js`) to avoid hitting inotify limits from Nix store symlinks
 
 ## Deployment
 - **GitHub Pages**: Auto-deploys via `.github/workflows/deploy.yml` on push to main

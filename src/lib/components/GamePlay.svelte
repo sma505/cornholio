@@ -9,7 +9,6 @@
 
   let scoreInputs = $state({})
   let errors = $state({})
-  let scoringMode = $state({}) // matchId -> 'quick' | 'frames'
   let seriesState = $state({}) // matchId -> { games: [...], currentGame: number }
   let selectedCourt = $state(0) // 0 = All, 1..N = specific court
 
@@ -92,9 +91,7 @@
     return getBestOf(match, isFinalsMatch(match))
   }
 
-  function getScoringMode(matchId) {
-    return scoringMode[matchId] || tournament.settings.defaultScoringMode || 'quick'
-  }
+  const scoringMode = $derived(tournament.settings.defaultScoringMode || 'quick')
 
   // Resolve numFrames for a match based on stage (quick mode)
   function getNumFrames(match) {
@@ -102,10 +99,6 @@
     if (isFinalsMatch(match)) return s.numFramesFinals || 3
     if (match.groupId || s.format === 'round-robin') return s.numFramesGroup || 3
     return s.numFramesPlayoff || 3
-  }
-
-  function toggleScoringMode(matchId) {
-    scoringMode[matchId] = getScoringMode(matchId) === 'quick' ? 'frames' : 'quick'
   }
 
   // Series management — read-only for templates, lazy-init from event handlers
@@ -486,6 +479,9 @@
   {@const seriesDone = series ? isSeriesComplete(series, bestOf) : false}
 
   <div class="bg-cornholio-navy/50 rounded-lg p-3">
+    {#if numCourts > 1 && match.court && !isBracket}
+      <div class="text-[10px] text-cornholio-gold/50 mb-1">Court {match.court}</div>
+    {/if}
     {#if match.completed}
       <!-- Completed match -->
       {@const isDraw = match.score1 === match.score2}
@@ -558,29 +554,9 @@
   </div>
 {/snippet}
 
-<!-- Single game score entry with Quick/Frame toggle -->
+<!-- Single game score entry (mode set at tournament level) -->
 {#snippet gameScoreEntry(match, isBracket)}
-  {@const mode = getScoringMode(match.id)}
-
-  <!-- Mode toggle -->
-  <div class="flex justify-center mb-3">
-    <div class="inline-flex bg-cornholio-dark/50 rounded-lg p-0.5">
-      <button
-        onclick={() => scoringMode[match.id] = 'quick'}
-        class="px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer border-none
-          {mode === 'quick' ? 'bg-cornholio-gold text-cornholio-dark' : 'text-tp-cream/50 hover:text-tp-cream'}">
-        Total
-      </button>
-      <button
-        onclick={() => scoringMode[match.id] = 'frames'}
-        class="px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer border-none
-          {mode === 'frames' ? 'bg-cornholio-gold text-cornholio-dark' : 'text-tp-cream/50 hover:text-tp-cream'}">
-        Frame-by-frame
-      </button>
-    </div>
-  </div>
-
-  {#if mode === 'frames'}
+  {#if scoringMode === 'frames'}
     <FrameScorer
       team1Name={teamName(match.team1Id)}
       team2Name={teamName(match.team2Id)}
@@ -588,21 +564,24 @@
       onGameComplete={(s1, s2, frames) => handleFrameComplete(match, isBracket, s1, s2, frames)}
     />
   {:else}
-    <!-- Quick score entry -->
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="flex-1 text-right text-tp-cream">{teamName(match.team1Id)}</span>
-      <input type="number" min="0"
-        value={getScoreInput(match.id, 1)}
-        oninput={(e) => setScoreInput(match.id, 1, e.target.value)}
-        class="w-16 bg-cornholio-dark border border-cornholio-gold/50 rounded px-2 py-1 text-cornholio-gold text-center" />
-      <span class="text-tp-cream/50 text-sm">vs</span>
-      <input type="number" min="0"
-        value={getScoreInput(match.id, 2)}
-        oninput={(e) => setScoreInput(match.id, 2, e.target.value)}
-        class="w-16 bg-cornholio-dark border border-cornholio-gold/50 rounded px-2 py-1 text-cornholio-gold text-center" />
-      <span class="flex-1 text-tp-cream">{teamName(match.team2Id)}</span>
+    <div class="flex items-center justify-center gap-2">
+      <div class="text-center min-w-0">
+        <div class="text-tp-cream text-xs mb-1 truncate">{teamName(match.team1Id)}</div>
+        <input type="number" min="0"
+          value={getScoreInput(match.id, 1)}
+          oninput={(e) => setScoreInput(match.id, 1, e.target.value)}
+          class="w-16 bg-cornholio-dark border border-cornholio-gold/50 rounded px-2 py-1 text-cornholio-gold text-center" />
+      </div>
+      <span class="text-tp-cream/50 text-sm mt-4">vs</span>
+      <div class="text-center min-w-0">
+        <div class="text-tp-cream text-xs mb-1 truncate">{teamName(match.team2Id)}</div>
+        <input type="number" min="0"
+          value={getScoreInput(match.id, 2)}
+          oninput={(e) => setScoreInput(match.id, 2, e.target.value)}
+          class="w-16 bg-cornholio-dark border border-cornholio-gold/50 rounded px-2 py-1 text-cornholio-gold text-center" />
+      </div>
       <button onclick={() => submitQuickScore(match, isBracket)}
-        class="bg-cornholio-gold text-cornholio-dark font-heading px-4 py-1 rounded
+        class="bg-cornholio-gold text-cornholio-dark font-heading px-4 py-1 rounded mt-4
           hover:bg-cornholio-gold-light transition-colors cursor-pointer text-sm">
         Submit
       </button>
@@ -678,81 +657,34 @@
       </div>
     </div>
   {:else}
-    <!-- Split into left / center (final) / right -->
-    {@const finalRound = rounds[rounds.length - 1]}
-    {@const preRounds = rounds.slice(0, rounds.length - 1)}
-    {@const mid = Math.ceil(preRounds[0].matches.length / 2)}
-
-    <div class="flex flex-wrap md:flex-nowrap items-center justify-center gap-2 overflow-x-auto pb-4">
-      <!-- LEFT BRACKET (flows →) -->
-      <div class="flex items-start gap-2">
-        {#each preRounds as round, ri}
-          {@const halfMatches = Math.ceil(round.matches.length / 2)}
-          {@const leftMatches = round.matches.slice(0, halfMatches)}
-          <div class="flex items-start gap-2">
-            <div class="flex flex-col gap-3 min-w-[200px] max-w-[300px] flex-1">
-              {#if ri === 0}
-                <h4 class="text-xs text-cornholio-gold/50 font-heading text-center">
-                  {round.name || `Round ${ri + 1}`}
-                </h4>
-              {/if}
-              {#each leftMatches as match}
-                {@render bracketMatchCard(match)}
-              {/each}
-            </div>
-            {#if ri < preRounds.length - 1}
-              <div class="flex flex-col justify-around self-center">
-                {#each { length: Math.max(1, Math.ceil(leftMatches.length / 2)) } as _}
-                  <div class="w-3 border-t-2 border-cornholio-gold/20 my-6"></div>
-                {/each}
-              </div>
-            {/if}
+    <!-- MOBILE: vertical stack of rounds -->
+    <div class="flex flex-col gap-4 md:hidden pb-4">
+      {#each rounds as round, ri}
+        <div>
+          <h4 class="text-xs text-cornholio-gold/50 font-heading text-center mb-2">
+            {round.name || (ri === rounds.length - 1 ? 'Final' : `Round ${ri + 1}`)}
+          </h4>
+          <div class="flex flex-col gap-3 max-w-sm mx-auto">
+            {#each round.matches as match}
+              {@render bracketMatchCard(match)}
+            {/each}
           </div>
-        {/each}
-      </div>
+        </div>
+      {/each}
+    </div>
 
-      <!-- Connector left → final -->
-      <div class="flex flex-col justify-center self-center">
-        <div class="w-4 border-t-2 border-cornholio-gold/30 my-2"></div>
-      </div>
-
-      <!-- CENTER: FINAL -->
-      <div class="flex flex-col items-center min-w-[200px] max-w-[320px] flex-1 self-center">
-        <h4 class="text-sm text-cornholio-gold font-heading mb-2">FINAL</h4>
-        {@render bracketMatchCard(finalRound.matches[0])}
-      </div>
-
-      <!-- Connector final → right -->
-      <div class="flex flex-col justify-center self-center">
-        <div class="w-4 border-t-2 border-cornholio-gold/30 my-2"></div>
-      </div>
-
-      <!-- RIGHT BRACKET (flows ←, rendered in reverse order) -->
-      <div class="flex items-start gap-2 flex-row-reverse">
-        {#each preRounds as round, ri}
-          {@const halfMatches = Math.ceil(round.matches.length / 2)}
-          {@const rightMatches = round.matches.slice(halfMatches)}
-          <div class="flex items-start gap-2 flex-row-reverse">
-            <div class="flex flex-col gap-3 min-w-[200px] max-w-[300px] flex-1">
-              {#if ri === 0}
-                <h4 class="text-xs text-cornholio-gold/50 font-heading text-center">
-                  {round.name || `Round ${ri + 1}`}
-                </h4>
-              {/if}
-              {#each rightMatches as match}
-                {@render bracketMatchCard(match)}
-              {/each}
-            </div>
-            {#if ri < preRounds.length - 1}
-              <div class="flex flex-col justify-around self-center">
-                {#each { length: Math.max(1, Math.ceil(rightMatches.length / 2)) } as _}
-                  <div class="w-3 border-t-2 border-cornholio-gold/20 my-6"></div>
-                {/each}
-              </div>
-            {/if}
-          </div>
-        {/each}
-      </div>
+    <!-- DESKTOP: left-to-right bracket flow -->
+    <div class="hidden md:flex gap-4 overflow-x-auto pb-4">
+      {#each rounds as round, ri}
+        <div class="flex flex-col gap-3 min-w-[200px] max-w-[320px] flex-1">
+          <h4 class="text-xs text-cornholio-gold/50 font-heading text-center">
+            {round.name || (ri === rounds.length - 1 ? 'Final' : `Round ${ri + 1}`)}
+          </h4>
+          {#each round.matches as match}
+            {@render bracketMatchCard(match)}
+          {/each}
+        </div>
+      {/each}
     </div>
   {/if}
 {/snippet}
@@ -762,10 +694,17 @@
   <div class="bg-cornholio-navy/50 border border-cornholio-gray-light/30 rounded-lg p-3 w-full max-w-sm
     {!match.completed && match.team1Id && match.team2Id ? 'border-cornholio-gold/30' : ''}
     {selectedCourt > 0 && match.court && match.court !== selectedCourt && !match.completed ? 'opacity-30' : ''}">
-    {#if numCourts > 1 && match.court && !match.completed}
+    {#if numCourts > 1 && match.court}
       <div class="text-[10px] text-cornholio-gold/50 mb-1">Court {match.court}</div>
     {/if}
-    {#if match.team1Id && match.team2Id}
+    {#if match.completed && match.team1Id && match.team2Id}
+      {@render matchEntry(match, true)}
+    {:else if match.completed}
+      <!-- Bye: auto-advanced -->
+      <div class="text-tp-cream/50 text-sm py-1">
+        {teamName(match.team1Id || match.team2Id)} — bye
+      </div>
+    {:else if match.team1Id && match.team2Id}
       {@render matchEntry(match, true)}
     {:else if match.team1Id || match.team2Id}
       <div class="text-tp-cream/50 text-sm py-1">
@@ -779,7 +718,21 @@
 
 <!-- Legacy bracket rounds for double-elim (still left-to-right) -->
 {#snippet bracketRounds(rounds)}
-  <div class="flex gap-4 overflow-x-auto pb-4">
+  <!-- MOBILE: vertical stack -->
+  <div class="flex flex-col gap-4 md:hidden pb-4">
+    {#each rounds as round, ri}
+      <div>
+        <h3 class="text-sm text-cornholio-gold/70 font-heading text-center mb-2">{round.name || `Round ${ri + 1}`}</h3>
+        <div class="flex flex-col gap-3 max-w-sm mx-auto">
+          {#each round.matches as match}
+            {@render bracketMatchCard(match)}
+          {/each}
+        </div>
+      </div>
+    {/each}
+  </div>
+  <!-- DESKTOP: horizontal flow -->
+  <div class="hidden md:flex gap-4 overflow-x-auto pb-4">
     {#each rounds as round, ri}
       <div class="flex flex-col gap-4 min-w-[200px] max-w-[320px] flex-1">
         <h3 class="text-sm text-cornholio-gold/70 font-heading">{round.name || `Round ${ri + 1}`}</h3>
@@ -787,13 +740,6 @@
           {@render bracketMatchCard(match)}
         {/each}
       </div>
-      {#if ri < rounds.length - 1}
-        <div class="flex flex-col justify-around py-8">
-          {#each { length: Math.max(1, Math.ceil(round.matches.length / 2)) } as _}
-            <div class="w-4 border-t-2 border-cornholio-gold/30 my-4"></div>
-          {/each}
-        </div>
-      {/if}
     {/each}
   </div>
 {/snippet}

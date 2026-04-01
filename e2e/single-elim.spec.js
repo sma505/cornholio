@@ -6,7 +6,7 @@ test.describe('Single Elimination', () => {
     await quickSetup(page, { name: 'SE-4p', format: 'single-elim', playerNames: ['A', 'B', 'C', 'D'] })
     await expect(page.getByText('GAME ON!')).toBeVisible()
     await expect(page.getByText('Single Elimination')).toBeVisible()
-    await expect(page.getByText('FINAL')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Final' })).toBeVisible()
   })
 
   test('bracket with 5 players loads without errors', async ({ page }) => {

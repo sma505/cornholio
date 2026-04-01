@@ -129,9 +129,9 @@
       </div>
     </div>
 
-    <!-- Default Scoring Mode -->
+    <!-- Scoring Mode -->
     <div class="bg-cornholio-gray/50 rounded-lg p-4">
-      <label class="text-tp-cream text-sm mb-2 block">Default Scoring</label>
+      <label class="text-tp-cream text-sm mb-2 block">Scoring Mode</label>
       <div class="flex gap-2">
         <button
           onclick={() => updateSettings({ defaultScoringMode: 'quick' })}
@@ -154,6 +154,13 @@
           <span class="block text-[10px] font-body {state.settings.defaultScoringMode === 'frames' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Enter per frame</span>
         </button>
       </div>
+      <p class="text-tp-cream/40 text-xs mt-2 leading-relaxed">
+        {#if state.settings.defaultScoringMode === 'frames'}
+          Enter each team's <span class="text-tp-cream/60">raw points per frame</span> (hole = 3, board = 1). The app calculates cancellation scoring automatically.
+        {:else}
+          Enter each team's <span class="text-tp-cream/60">final cancelled score</span> after all frames are played.
+        {/if}
+      </p>
     </div>
 
     {#if state.settings.gameMode === 'standard'}

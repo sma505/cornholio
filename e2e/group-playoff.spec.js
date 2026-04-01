@@ -64,6 +64,6 @@ test.describe('Group + Playoff', () => {
     await page.getByRole('button', { name: /CONTINUE|VIEW/ }).click()
     await page.waitForTimeout(500)
     await expect(page.getByRole('heading', { name: 'Playoff Bracket' })).toBeVisible()
-    await expect(page.getByText('FINAL')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Final' })).toBeVisible()
   })
 })

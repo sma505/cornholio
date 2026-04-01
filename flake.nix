@@ -24,8 +24,12 @@
             echo "🌽 Cornholio dev environment loaded"
             echo "Node: $(node --version)"
             echo "npm: $(npm --version)"
-            export PLAYWRIGHT_BROWSERS_PATH="${playwright-browsers}"
             export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
+            # Don't export PLAYWRIGHT_BROWSERS_PATH globally — it breaks MCP Playwright
+            # which inherits the read-only Nix store path and tries to mkdir inside it.
+            # Store it so npm scripts can reference it via cross-env or direct use.
+            export NIX_PLAYWRIGHT_BROWSERS_PATH="${playwright-browsers}"
           '';
         };
       });

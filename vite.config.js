@@ -5,4 +5,9 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [svelte(), tailwindcss()],
   base: '/cornholio/',
+  server: {
+    watch: {
+      ignored: ['**/.direnv/**'],
+    },
+  },
 })

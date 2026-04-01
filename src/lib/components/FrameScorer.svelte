@@ -45,7 +45,7 @@
   }
 </script>
 
-<div class="space-y-3">
+<div class="space-y-2">
   <!-- Score Display -->
   <div class="bg-cornholio-dark/50 rounded-lg py-3 px-4">
     <div class="text-center text-tp-cream/40 text-[10px] uppercase tracking-widest mb-1">Score</div>
@@ -88,79 +88,65 @@
   {/if}
 
   {#if !gameFinished}
-    <!-- Frame explanation (show only before first frame) -->
-    {#if frames.length === 0}
-      <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
-        <p class="text-tp-cream/60 text-xs leading-relaxed">
-          <span class="text-cornholio-gold font-bold">Frame</span> = one round of throwing. Each team throws 4 bags
-          (hole = 3 pts, board = 1 pt). Enter each team's total raw points, then the app calculates the
-          cancellation score (only the difference counts).
-        </p>
+    <!-- Frame Entry -->
+    <div class="text-center text-tp-cream/50 text-xs mb-3">
+      Enter raw points
+    </div>
+
+    <div class="flex items-center justify-center gap-2">
+      <span class="text-cornholio-gold text-xs font-heading w-8 text-right">F{frames.length + 1}</span>
+      <div class="text-center">
+        <div class="text-tp-cream/40 text-[10px] mb-1 truncate max-w-20">{team1Name}</div>
+        <input
+          type="number"
+          min="0"
+          max="12"
+          placeholder="0"
+          bind:value={input1}
+          onkeydown={handleKeydown}
+          class="w-16 bg-cornholio-dark border-2 border-cornholio-gold/50 rounded-lg px-2 py-2
+            text-cornholio-gold text-center text-xl font-bold focus:border-cornholio-gold focus:outline-none"
+        />
+      </div>
+      <span class="text-tp-cream/30 text-lg mt-4">:</span>
+      <div class="text-center">
+        <div class="text-tp-cream/40 text-[10px] mb-1 truncate max-w-20">{team2Name}</div>
+        <input
+          type="number"
+          min="0"
+          max="12"
+          placeholder="0"
+          bind:value={input2}
+          onkeydown={handleKeydown}
+          class="w-16 bg-cornholio-dark border-2 border-cornholio-gold/50 rounded-lg px-2 py-2
+            text-cornholio-gold text-center text-xl font-bold focus:border-cornholio-gold focus:outline-none"
+        />
+      </div>
+      <button
+        onclick={submitFrame}
+        class="bg-cornholio-gold text-cornholio-dark font-heading px-4 py-2 rounded-lg mt-4
+          hover:bg-cornholio-gold-light transition-colors cursor-pointer text-sm"
+      >
+        ADD
+      </button>
+    </div>
+
+    <!-- Cancellation Preview -->
+    {#if previewPts1 > 0 || previewPts2 > 0}
+      <div class="text-center mt-2">
+        {#if preview.net > 0}
+          <span class="text-cornholio-gold text-sm font-bold">
+            → {preview.scoringTeam === 1 ? team1Name : team2Name} gets +{preview.net}
+          </span>
+        {:else}
+          <span class="text-tp-cream/40 text-sm">Equal points — no score change</span>
+        {/if}
       </div>
     {/if}
 
-    <!-- Frame Entry -->
-    <div class="bg-cornholio-navy/50 border border-cornholio-gray-light/30 rounded-lg p-4">
-      <div class="text-center text-tp-cream/50 text-xs mb-3">
-        Enter each team's <span class="text-tp-cream">raw points</span> for this frame
-        <span class="text-tp-cream/30">(e.g. 2 holes + 1 board = 7)</span>
-      </div>
-
-      <div class="flex items-center justify-center gap-2">
-        <span class="text-cornholio-gold text-xs font-heading w-8 text-right">F{frames.length + 1}</span>
-        <div class="text-center">
-          <div class="text-tp-cream/40 text-[10px] mb-1 truncate max-w-20">{team1Name}</div>
-          <input
-            type="number"
-            min="0"
-            max="12"
-            placeholder="0"
-            bind:value={input1}
-            onkeydown={handleKeydown}
-            class="w-16 bg-cornholio-dark border-2 border-cornholio-gold/50 rounded-lg px-2 py-2
-              text-cornholio-gold text-center text-xl font-bold focus:border-cornholio-gold focus:outline-none"
-          />
-        </div>
-        <span class="text-tp-cream/30 text-lg mt-4">:</span>
-        <div class="text-center">
-          <div class="text-tp-cream/40 text-[10px] mb-1 truncate max-w-20">{team2Name}</div>
-          <input
-            type="number"
-            min="0"
-            max="12"
-            placeholder="0"
-            bind:value={input2}
-            onkeydown={handleKeydown}
-            class="w-16 bg-cornholio-dark border-2 border-cornholio-gold/50 rounded-lg px-2 py-2
-              text-cornholio-gold text-center text-xl font-bold focus:border-cornholio-gold focus:outline-none"
-          />
-        </div>
-        <button
-          onclick={submitFrame}
-          class="bg-cornholio-gold text-cornholio-dark font-heading px-4 py-2 rounded-lg mt-4
-            hover:bg-cornholio-gold-light transition-colors cursor-pointer text-sm"
-        >
-          ADD
-        </button>
-      </div>
-
-      <!-- Cancellation Preview -->
-      <div class="text-center mt-2 h-5">
-        {#if previewPts1 > 0 || previewPts2 > 0}
-          {#if preview.net > 0}
-            <span class="text-cornholio-gold text-sm font-bold">
-              → {preview.scoringTeam === 1 ? team1Name : team2Name} gets +{preview.net}
-            </span>
-          {:else}
-            <span class="text-tp-cream/40 text-sm">Equal points — no score change</span>
-          {/if}
-        {/if}
-      </div>
-
-      {#if frameError}
-        <div class="text-cornholio-red text-xs mt-2 text-center">{frameError}</div>
-      {/if}
-    </div>
+    {#if frameError}
+      <div class="text-cornholio-red text-xs mt-2 text-center">{frameError}</div>
+    {/if}
   {:else}
     <div class="text-center py-3 bg-cornholio-gold/10 rounded-lg">
       <span class="text-cornholio-gold font-heading text-lg">GAME COMPLETE!</span>
