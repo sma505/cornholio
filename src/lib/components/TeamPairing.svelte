@@ -1,6 +1,7 @@
 <script>
   import Sortable from 'sortablejs'
   import { getState, setTeams, setStep } from '../stores/tournament.svelte.js'
+  import { t } from '../i18n/index.svelte.js'
 
   const tournament = getState()
 
@@ -21,7 +22,7 @@
     const numGroups = tournament.settings.numGroups
     const minTeams = numGroups * 2
     if (teams.length < minTeams) {
-      return `Group + Playoff with ${numGroups} groups needs at least ${minTeams} teams (you have ${teams.length}). Add more players or reduce groups.`
+      return t('pairing.groupNeedTeams', { numGroups, minTeams, count: teams.length })
     }
     return null
   })
@@ -197,9 +198,9 @@
 </script>
 
 <div class="flex-1 flex flex-col items-center px-4 py-8 max-w-5xl mx-auto w-full">
-  <h1 class="text-4xl md:text-5xl text-cornholio-gold font-heading mb-2">TEAM PAIRING</h1>
+  <h1 class="text-4xl md:text-5xl text-cornholio-gold font-heading mb-2">{t('pairing.title')}</h1>
   <p class="text-tp-cream/60 mb-6">
-    Pair up your {tournament.players.length} players into teams of 2.
+    {t('pairing.intro', { count: tournament.players.length })}
   </p>
 
   <!-- Mode toggle & shuffle -->
@@ -209,14 +210,14 @@
       class="bg-cornholio-gold text-cornholio-dark font-heading text-lg px-6 py-2 rounded-lg
         hover:bg-cornholio-gold-light hover:scale-105 transition-all cursor-pointer shadow-lg"
     >
-      SHUFFLE TEAMS
+      {t('pairing.shuffle')}
     </button>
     <button
       onclick={addTeam}
       class="bg-cornholio-navy text-cornholio-gold font-heading text-lg px-6 py-2 rounded-lg
         border-2 border-cornholio-gold/50 hover:border-cornholio-gold transition-all cursor-pointer"
     >
-      + ADD TEAM
+      {t('pairing.addTeam')}
     </button>
   </div>
 
@@ -226,7 +227,7 @@
     <!-- Unassigned players -->
     <div class="md:w-1/3 w-full">
       <h2 class="text-xl text-cornholio-gold font-heading mb-3">
-        UNASSIGNED
+        {t('pairing.unassigned')}
         <span class="text-tp-cream/40 text-base">({unassigned.length})</span>
       </h2>
       <div
@@ -248,7 +249,7 @@
                   {#if team.players.length < 2}
                     <button
                       onclick={() => assignPlayer(player, team.id)}
-                      title="Add to {team.name}"
+                      title={t('pairing.addTo', { name: team.name })}
                       class="text-xs bg-cornholio-gold/20 text-cornholio-gold px-2 py-0.5 rounded
                         hover:bg-cornholio-gold/40 transition-colors cursor-pointer border-none"
                     >
@@ -261,7 +262,7 @@
           </div>
         {/each}
         {#if unassigned.length === 0}
-          <p class="text-tp-cream/30 text-sm text-center py-4">All players assigned!</p>
+          <p class="text-tp-cream/30 text-sm text-center py-4">{t('pairing.allAssigned')}</p>
         {/if}
       </div>
     </div>
@@ -269,7 +270,7 @@
     <!-- Teams -->
     <div class="md:w-2/3 w-full">
       <h2 class="text-xl text-cornholio-gold font-heading mb-3">
-        TEAMS
+        {t('pairing.teamsLabel')}
         <span class="text-tp-cream/40 text-base">({teams.length})</span>
       </h2>
 
@@ -277,7 +278,7 @@
         <div class="min-h-[120px] bg-cornholio-dark/50 border-2 border-dashed border-cornholio-gray-light/50
           rounded-xl p-6 flex items-center justify-center">
           <p class="text-tp-cream/30 text-center">
-            Click "Shuffle Teams" to auto-pair, or "Add Team" to build manually.
+            {t('pairing.emptyHint')}
           </p>
         </div>
       {:else}
@@ -299,7 +300,7 @@
                 </div>
                 <button
                   onclick={() => removeTeam(team.id)}
-                  title="Remove team"
+                  title={t('pairing.removeTeam')}
                   class="text-cornholio-red/50 hover:text-cornholio-red text-lg cursor-pointer
                     bg-transparent border-none ml-2 flex-shrink-0"
                 >
@@ -323,7 +324,7 @@
                     <span class="text-tp-white text-sm">{player}</span>
                     <button
                       onclick={() => unassignPlayer(player, team.id)}
-                      title="Remove from team"
+                      title={t('pairing.removeFromTeam')}
                       class="text-cornholio-red/40 hover:text-cornholio-red text-sm cursor-pointer
                         bg-transparent border-none"
                     >
@@ -332,9 +333,9 @@
                   </div>
                 {/each}
                 {#if team.players.length === 0}
-                  <p class="text-tp-cream/20 text-xs text-center py-2">Drag players here</p>
+                  <p class="text-tp-cream/20 text-xs text-center py-2">{t('pairing.dragHere')}</p>
                 {:else if team.players.length === 1}
-                  <p class="text-tp-cream/20 text-xs text-center py-1">1 more slot</p>
+                  <p class="text-tp-cream/20 text-xs text-center py-1">{t('pairing.oneMoreSlot')}</p>
                 {/if}
               </div>
 
@@ -359,11 +360,11 @@
     <div class="mb-6 text-center">
       {#if !allAssigned}
         <p class="text-cornholio-red text-sm">
-          {unassigned.length} player{unassigned.length !== 1 ? 's' : ''} still unassigned.
+          {t('pairing.unassignedWarning').split(' | ')[unassigned.length === 1 ? 0 : 1].replace('{count}', unassigned.length)}
         </p>
       {/if}
       {#if !enoughTeams}
-        <p class="text-cornholio-red text-sm">Need at least 2 teams to start.</p>
+        <p class="text-cornholio-red text-sm">{t('pairing.needTeams')}</p>
       {/if}
       {#if groupWarning()}
         <p class="text-cornholio-red text-sm">{groupWarning()}</p>
@@ -378,7 +379,7 @@
       class="bg-cornholio-gray text-tp-cream font-heading text-xl px-8 py-3 rounded-lg
         hover:bg-cornholio-gray-light transition-all cursor-pointer border border-cornholio-gray-light"
     >
-      &larr; BACK
+      {t('common.back')}
     </button>
     <button
       onclick={proceed}
@@ -387,7 +388,7 @@
         hover:bg-cornholio-gold-light hover:scale-105 transition-all cursor-pointer shadow-lg
         disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
     >
-      START TOURNAMENT &rarr;
+      {t('pairing.startTournament')}
     </button>
   </div>
 </div>

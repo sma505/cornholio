@@ -1,7 +1,7 @@
 # Cornholio - Cornhole Tournament Manager
 
 ## Project Overview
-A single-page webapp for creating and running cornhole tournaments with Beavis & Butthead "Cornholio" theming. Supports singles and teams, multiple tournament formats, two game modes, best-of series, frame-by-frame scoring, draw support, multi-court play, and multi-tournament management.
+A single-page webapp for creating and running cornhole tournaments with Beavis & Butthead "Cornholio" theming. Supports singles and teams, multiple tournament formats, two game modes, best-of series, frame-by-frame scoring, draw support, multi-court play, multi-tournament management, and multi-language UI (EN/DE).
 
 ## Tech Stack
 - **Framework**: Svelte 5 (runes: `$state`, `$derived`, `$effect`) + Vite
@@ -92,11 +92,25 @@ settings: {
 }
 ```
 
+### Internationalization (i18n)
+- **Languages**: English (EN) and German (DE)
+- **Store**: `src/lib/i18n/index.svelte.js` — Svelte 5 reactive store with `t(key, params?)`, `getLocale()`, `setLocale(lang)`
+- **Translations**: `src/lib/i18n/en.js` and `src/lib/i18n/de.js` — flat key-value maps (~200 keys each)
+- **Auto-detection**: Uses browser language on first visit, persists choice to `localStorage` as `cornholio-lang`
+- **Language switcher**: EN/DE toggle on Home screen and in the header (CornholioHeader)
+- **Usage**: Import `t` in any component, call `t('key')` or `t('key', { param: value })` for interpolation
+- **Interpolation**: `{variable}` syntax in translation strings, e.g. `'Round {n}'` → `t('round.number', { n: 3 })`
+- **Pluralization**: Pipe-delimited forms `'singular | plural'`, split and select by count in component
+
 ### Key Files
 ```
 src/
   App.svelte                          # Step-based router, conditional flow for singles/teams
   lib/
+    i18n/
+      index.svelte.js                 # i18n store: t(), getLocale(), setLocale()
+      en.js                           # English translations (~200 keys)
+      de.js                           # German translations (~200 keys)
     stores/tournament.svelte.js       # Central state store, multi-tournament, createTeamsFromPlayers
     utils/
       scoring.js                      # Score validation, frame calculations, draw detection
@@ -131,7 +145,7 @@ e2e/
 ### Theming
 - **Colors**: Dark blue (#1a1a4e) bg, gold (#f5c542) accents, off-white (#f0e6d3) text
 - **Font**: Bangers (Google Fonts) for headings
-- **Header**: Shows current format + game mode (e.g. "Single Elim / Quick"), help button, step nav. No rotating quotes (removed for space).
+- **Header**: Shows current format + game mode (e.g. "Single Elim / Quick"), help button, language switcher (EN/DE), step nav. No rotating quotes (removed for space).
 
 ## Conventions
 - All components use Svelte 5 runes, not legacy stores
@@ -147,6 +161,9 @@ e2e/
 - Don't mutate `$state` inside template expressions or `$derived` — use read-only functions for templates, mutating functions only in event handlers
 - `goHome()` force-saves before navigating to prevent data loss from debounced saves
 - Court assignment: call `assignCourts()` before `setMatches()`, call `assignBracketCourts()` after bracket generation and after each bracket match completion
+- All user-facing strings go through `t()` from `src/lib/i18n/index.svelte.js` — never hardcode display text in components
+- Translation keys use dot notation grouped by component/section: `home.*`, `setup.*`, `play.*`, `format.*`, `common.*`, etc.
+- When adding new strings, add keys to both `en.js` and `de.js`
 
 ## Testing
 - **Unit tests** (Vitest): `npm run test:run` — 178 tests covering scoring, round-robin, bracket logic

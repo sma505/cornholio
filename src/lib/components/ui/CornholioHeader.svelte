@@ -1,25 +1,26 @@
 <script>
   import { getRandomQuote, goHome, getState } from '../../stores/tournament.svelte.js'
+  import { t, getLocale, setLocale } from '../../i18n/index.svelte.js'
   import HelpModal from './HelpModal.svelte'
 
   let { currentStep } = $props()
 
   const tournament = getState()
 
-  const steps = [
-    { id: 'setup', label: 'Setup' },
-    { id: 'players', label: 'Players' },
-    { id: 'teams', label: 'Teams' },
-    { id: 'play', label: 'Play' },
-    { id: 'results', label: 'Results' },
-  ]
+  const steps = $derived([
+    { id: 'setup', label: t('header.setup') },
+    { id: 'players', label: t('header.players') },
+    { id: 'teams', label: t('header.teams') },
+    { id: 'play', label: t('header.play') },
+    { id: 'results', label: t('header.results') },
+  ])
 
-  const formatLabels = {
-    'round-robin': 'Round Robin',
-    'group-playoff': 'Group + Playoff',
-    'single-elim': 'Single Elim',
-    'double-elim': 'Double Elim',
-  }
+  const formatLabels = $derived({
+    'round-robin': t('format.roundRobin'),
+    'group-playoff': t('format.groupPlayoff'),
+    'single-elim': t('format.singleElimShort'),
+    'double-elim': t('format.doubleElimShort'),
+  })
 
   let quote = $state(getRandomQuote())
   let helpOpen = $state(false)
@@ -37,7 +38,7 @@
       onclick={goHome}
       class="text-2xl md:text-3xl text-cornholio-gold font-heading m-0 bg-transparent border-none
         cursor-pointer hover:text-cornholio-gold-light transition-colors"
-      title="Back to tournaments"
+      title={t('header.backToTournaments')}
     >
       CORNHOLIO
     </button>
@@ -59,15 +60,31 @@
       <div class="hidden sm:flex items-center gap-1.5 text-[11px] text-tp-cream/40">
         <span>{formatLabels[tournament.settings.format] || ''}</span>
         <span class="text-tp-cream/20">/</span>
-        <span class="capitalize">{tournament.settings.gameMode}</span>
+        <span>{tournament.settings.gameMode === 'quick' ? t('mode.quick') : t('mode.standard')}</span>
+      </div>
+      <div class="flex gap-0.5">
+        <button
+          onclick={() => setLocale('en')}
+          class="text-[10px] px-1.5 py-0.5 rounded transition-colors cursor-pointer border
+            {getLocale() === 'en'
+              ? 'bg-cornholio-gold/20 text-cornholio-gold border-cornholio-gold/40'
+              : 'bg-transparent text-tp-cream/30 border-cornholio-gray-light/20 hover:text-tp-cream/50'}"
+        >EN</button>
+        <button
+          onclick={() => setLocale('de')}
+          class="text-[10px] px-1.5 py-0.5 rounded transition-colors cursor-pointer border
+            {getLocale() === 'de'
+              ? 'bg-cornholio-gold/20 text-cornholio-gold border-cornholio-gold/40'
+              : 'bg-transparent text-tp-cream/30 border-cornholio-gray-light/20 hover:text-tp-cream/50'}"
+        >DE</button>
       </div>
       <button
         onclick={() => helpOpen = true}
         class="text-cornholio-gold/70 hover:text-cornholio-gold bg-transparent border border-cornholio-gold/30
           hover:border-cornholio-gold/60 rounded-full w-7 h-7 flex items-center justify-center
           cursor-pointer transition-colors text-sm font-bold"
-        title="Help"
-        aria-label="Help"
+        title={t('header.helpTitle')}
+        aria-label={t('header.helpTitle')}
       >?</button>
     </div>
   </div>

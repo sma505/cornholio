@@ -4,6 +4,7 @@
   import { generateSingleElimBracket, generateDoubleElimBracket, advanceBracket, getBracketWinner } from '../utils/bracket.js'
   import { validateScore, getMatchResult } from '../utils/scoring.js'
   import FrameScorer from './FrameScorer.svelte'
+  import { t } from '../i18n/index.svelte.js'
 
   const tournament = getState()
 
@@ -15,10 +16,10 @@
   const numCourts = $derived(tournament.settings.numCourts || 1)
 
   function roundName(ri, total) {
-    if (ri === total - 1) return 'Final'
-    if (ri === total - 2) return 'Semifinals'
-    if (ri === total - 3) return 'Quarterfinals'
-    return `Round ${ri + 1}`
+    if (ri === total - 1) return t('round.final')
+    if (ri === total - 2) return t('round.semifinals')
+    if (ri === total - 3) return t('round.quarterfinals')
+    return t('round.number', { n: ri + 1 })
   }
 
   // Assign courts to unplayed matches (round-robin distribution)
@@ -320,20 +321,20 @@
 </script>
 
 <div class="flex-1 flex flex-col px-4 py-6 max-w-6xl mx-auto w-full">
-  <h1 class="text-3xl md:text-4xl text-cornholio-gold mb-1 text-center">GAME ON!</h1>
+  <h1 class="text-3xl md:text-4xl text-cornholio-gold mb-1 text-center">{t('play.gameOn')}</h1>
   <p class="text-tp-cream/60 mb-6 text-center text-sm">
     {#if tournament.settings.format === 'round-robin'}
-      Round Robin
+      {t('format.roundRobin')}
     {:else if tournament.settings.format === 'group-playoff'}
-      {#if tournament.bracket}Playoff Bracket{:else}Group Stage{/if}
+      {#if tournament.bracket}{t('play.playoffBracket')}{:else}{t('play.groupStage')}{/if}
     {:else if tournament.settings.format === 'single-elim'}
-      Single Elimination
+      {t('format.singleElim')}
     {:else}
-      Double Elimination
+      {t('format.doubleElim')}
     {/if}
     &mdash; {tournament.settings.gameMode === 'quick'
-      ? 'Quick Mode'
-      : `First to ${tournament.settings.pointsToWin}`}
+      ? t('mode.quick')
+      : t('play.firstTo', { target: tournament.settings.pointsToWin })}
   </p>
 
   <!-- Court Tabs -->
@@ -346,7 +347,7 @@
             ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
             : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
       >
-        All
+        {t('play.courtAll')}
       </button>
       {#each { length: numCourts } as _, i}
         {@const courtNum = i + 1}
@@ -358,7 +359,7 @@
               ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
               : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
         >
-          Court {courtNum}
+          {t('play.court', { n: courtNum })}
           {#if activeCount > 0}
             <span class="ml-1 text-xs opacity-70">({activeCount})</span>
           {/if}
@@ -372,7 +373,7 @@
     <div class="space-y-6 mb-8">
       {#each rounds() as { round, matches }}
         <div>
-          <h2 class="text-xl text-cornholio-gold mb-3">Round {round}</h2>
+          <h2 class="text-xl text-cornholio-gold mb-3">{t('play.round', { n: round })}</h2>
           <div class="space-y-3">
             {#each filterByCourt(matches) as match}
               {@render matchEntry(match, false)}
@@ -384,7 +385,7 @@
 
     {#if rrStandings().length > 0}
       <div class="mb-8">
-        <h2 class="text-xl text-cornholio-gold mb-3">Standings</h2>
+        <h2 class="text-xl text-cornholio-gold mb-3">{t('play.standings')}</h2>
         {@render standingsTable(rrStandings(), allRoundRobinDone)}
       </div>
     {/if}
@@ -394,7 +395,7 @@
         <button onclick={handleRRChampion}
           class="bg-cornholio-gold text-cornholio-dark font-heading text-2xl px-10 py-3 rounded-lg
             hover:bg-cornholio-gold-light hover:scale-105 transition-all cursor-pointer shadow-lg">
-          CROWN THE CHAMPION
+          {t('play.crownChampion')}
         </button>
       </div>
     {/if}
@@ -416,7 +417,7 @@
     {:else}
       <details class="mb-6 group">
         <summary class="text-sm text-cornholio-gold/60 hover:text-cornholio-gold cursor-pointer select-none transition-colors">
-          Group Standings ▸
+          {t('play.groupStandings')}
         </summary>
         <div class="mt-3 space-y-4">
           {#each tournament.groups as group}
@@ -427,7 +428,7 @@
           {/each}
         </div>
       </details>
-      <h2 class="text-xl text-cornholio-gold mb-4">Playoff Bracket</h2>
+      <h2 class="text-xl text-cornholio-gold mb-4">{t('play.playoffBracket')}</h2>
       {@render bracketView(tournament.bracket)}
     {/if}
 
@@ -438,15 +439,15 @@
   <!-- DOUBLE ELIMINATION -->
   {:else if tournament.settings.format === 'double-elim' && tournament.bracket}
     {#if tournament.bracket.winners}
-      <h2 class="text-xl text-cornholio-gold mb-3">Winners Bracket</h2>
+      <h2 class="text-xl text-cornholio-gold mb-3">{t('play.winnersBracket')}</h2>
       {@render bracketRounds(tournament.bracket.winners)}
     {/if}
     {#if tournament.bracket.losers?.length > 0}
-      <h2 class="text-xl text-cornholio-gold mb-3 mt-6">Losers Bracket</h2>
+      <h2 class="text-xl text-cornholio-gold mb-3 mt-6">{t('play.losersBracket')}</h2>
       {@render bracketRounds(tournament.bracket.losers)}
     {/if}
     {#if tournament.bracket.finals}
-      <h2 class="text-xl text-cornholio-gold mb-3 mt-6">Grand Finals</h2>
+      <h2 class="text-xl text-cornholio-gold mb-3 mt-6">{t('play.grandFinals')}</h2>
       {@render bracketRounds([tournament.bracket.finals])}
     {/if}
   {/if}
@@ -454,11 +455,11 @@
   <!-- Champion -->
   {#if tournament.champion}
     <div class="mt-8 text-center">
-      <p class="text-2xl text-cornholio-gold mb-4 font-heading">Champion: {teamName(tournament.champion)}!</p>
+      <p class="text-2xl text-cornholio-gold mb-4 font-heading">{t('play.champion', { name: teamName(tournament.champion) })}</p>
       <button onclick={() => setStep('results')}
         class="bg-cornholio-gold text-cornholio-dark font-heading text-2xl px-10 py-3 rounded-lg
           hover:bg-cornholio-gold-light hover:scale-105 transition-all cursor-pointer shadow-lg">
-        VIEW RESULTS
+        {t('play.viewResults')}
       </button>
     </div>
   {/if}
@@ -467,23 +468,23 @@
   <div class="mt-12 pt-6 border-t border-cornholio-gray-light/20 text-center no-print">
     <button onclick={() => showCancelConfirm = true}
       class="text-cornholio-red/60 hover:text-cornholio-red text-sm cursor-pointer bg-transparent border-none underline">
-      Cancel Tournament
+      {t('play.cancelTournament')}
     </button>
   </div>
 
   {#if showCancelConfirm}
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div class="bg-cornholio-blue border-2 border-cornholio-gold/50 rounded-xl p-6 max-w-sm mx-4 text-center">
-        <h3 class="text-xl text-cornholio-gold font-heading mb-3">CANCEL TOURNAMENT?</h3>
-        <p class="text-tp-cream/70 text-sm mb-6">All match results will be lost. You'll return to team pairing.</p>
+        <h3 class="text-xl text-cornholio-gold font-heading mb-3">{t('play.cancelTitle')}</h3>
+        <p class="text-tp-cream/70 text-sm mb-6">{t('play.cancelMessage')}</p>
         <div class="flex gap-3 justify-center">
           <button onclick={() => showCancelConfirm = false}
             class="bg-cornholio-gray text-tp-cream font-heading px-6 py-2 rounded-lg hover:bg-cornholio-gray-light transition-all cursor-pointer border border-cornholio-gray-light">
-            KEEP PLAYING
+            {t('play.keepPlaying')}
           </button>
           <button onclick={cancelTournament}
             class="bg-cornholio-red text-white font-heading px-6 py-2 rounded-lg hover:bg-cornholio-red/80 transition-all cursor-pointer">
-            CANCEL
+            {t('common.cancel')}
           </button>
         </div>
       </div>
@@ -501,7 +502,7 @@
 
   <div class="bg-cornholio-navy/50 rounded-lg p-3">
     {#if numCourts > 1 && match.court && !isBracket}
-      <div class="text-[10px] text-cornholio-gold/50 mb-1">Court {match.court}</div>
+      <div class="text-[10px] text-cornholio-gold/50 mb-1">{t('play.court', { n: match.court })}</div>
     {/if}
     {#if match.completed}
       <!-- Completed match — stacked bracket card -->
@@ -526,10 +527,10 @@
           </span>
         </div>
         {#if isDraw}
-          <div class="text-center text-tp-cream/40 text-xs py-1 bg-cornholio-dark/40">DRAW</div>
+          <div class="text-center text-tp-cream/40 text-xs py-1 bg-cornholio-dark/40">{t('common.draw')}</div>
         {/if}
         {#if bestOf > 1}
-          <div class="text-center text-tp-cream/40 text-xs py-1 bg-cornholio-dark/40">Series (Bo{bestOf})</div>
+          <div class="text-center text-tp-cream/40 text-xs py-1 bg-cornholio-dark/40">{t('play.series', { n: bestOf })}</div>
         {/if}
       </div>
     {:else if bestOf > 1 && !seriesDone}
@@ -554,7 +555,7 @@
                 {i < w1 ? 'bg-cornholio-gold' : 'bg-transparent'}"></div>
             {/each}
           </div>
-          <span class="text-tp-cream/50 text-xs">First to {needed}</span>
+          <span class="text-tp-cream/50 text-xs">{t('play.firstTo', { target: needed })}</span>
           <div class="flex gap-1">
             {#each { length: needed } as _, i}
               <div class="w-4 h-4 rounded-full border border-cornholio-gold/50
@@ -599,7 +600,7 @@
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between gap-2">
         <div class="text-tp-cream text-xs truncate flex-1 text-right whitespace-nowrap">{teamName(match.team1Id)}</div>
-        <span class="text-tp-cream/50 text-xs shrink-0">vs</span>
+        <span class="text-tp-cream/50 text-xs shrink-0">{t('common.vs')}</span>
         <div class="text-tp-cream text-xs truncate flex-1 whitespace-nowrap">{teamName(match.team2Id)}</div>
       </div>
       <div class="flex items-center justify-center gap-2">
@@ -615,7 +616,7 @@
         <button onclick={() => submitQuickScore(match, isBracket)}
           class="bg-cornholio-gold text-cornholio-dark font-heading px-4 py-1 rounded
             hover:bg-cornholio-gold-light transition-colors cursor-pointer text-sm">
-          Submit
+          {t('common.submit')}
         </button>
       </div>
     </div>
@@ -629,19 +630,19 @@
     <table class="w-full border-collapse text-sm">
       <thead>
         <tr class="bg-cornholio-gray/50 text-tp-cream/80">
-          <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">#</th>
-          <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">Team</th>
+          <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">{t('standings.rank')}</th>
+          <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">{t('standings.team')}</th>
           {#if isQuickMode}
-            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">Pts</th>
+            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.pts')}</th>
           {/if}
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">W</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.w')}</th>
           {#if isQuickMode}
-            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">D</th>
+            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.d')}</th>
           {/if}
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">L</th>
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">PF</th>
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">PA</th>
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">Diff</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.l')}</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.pf')}</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.pa')}</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.diff')}</th>
         </tr>
       </thead>
       <tbody>
@@ -678,12 +679,12 @@
 {#snippet bracketView(bracket)}
   {@const rounds = bracket.winners || bracket.rounds || (Array.isArray(bracket) ? bracket : [])}
   {#if rounds.length === 0}
-    <div class="text-tp-cream/30 italic">No bracket data</div>
+    <div class="text-tp-cream/30 italic">{t('play.noBracketData')}</div>
   {:else if rounds.length === 1}
     <!-- Single round (just the final) -->
     <div class="flex justify-center max-w-sm w-full mx-auto">
       <div class="w-full">
-        <h4 class="text-sm text-cornholio-gold font-heading text-center mb-2">Final</h4>
+        <h4 class="text-sm text-cornholio-gold font-heading text-center mb-2">{t('round.final')}</h4>
         {#each rounds[0].matches as match}
           {@render bracketMatchCard(match)}
         {/each}
@@ -728,23 +729,23 @@
     {!match.completed && match.team1Id && match.team2Id ? 'border-cornholio-gold/30' : ''}
     {selectedCourt > 0 && match.court && match.court !== selectedCourt && !match.completed ? 'opacity-30' : ''}">
     {#if numCourts > 1 && match.court}
-      <div class="text-[10px] text-cornholio-gold/50 mb-1">Court {match.court}</div>
+      <div class="text-[10px] text-cornholio-gold/50 mb-1">{t('play.court', { n: match.court })}</div>
     {/if}
     {#if match.completed && match.team1Id && match.team2Id}
       {@render matchEntry(match, true)}
     {:else if match.completed}
       <!-- Bye: auto-advanced -->
       <div class="text-tp-cream/50 text-sm py-1">
-        {teamName(match.team1Id || match.team2Id)} — bye
+        {teamName(match.team1Id || match.team2Id)} — {t('common.bye')}
       </div>
     {:else if match.team1Id && match.team2Id}
       {@render matchEntry(match, true)}
     {:else if match.team1Id || match.team2Id}
       <div class="text-tp-cream/50 text-sm py-1">
-        {teamName(match.team1Id || match.team2Id)} — waiting for opponent...
+        {teamName(match.team1Id || match.team2Id)} — {t('play.waitingOpponent')}
       </div>
     {:else}
-      <div class="text-tp-cream/30 text-sm italic py-2">Waiting for teams...</div>
+      <div class="text-tp-cream/30 text-sm italic py-2">{t('play.waitingTeams')}</div>
     {/if}
   </div>
 {/snippet}

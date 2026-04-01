@@ -1,34 +1,35 @@
 <script>
   import { getState, updateSettings, setStep, setName } from '../stores/tournament.svelte.js'
+  import { t } from '../i18n/index.svelte.js'
 
   const state = getState()
 
-  const formats = [
+  const formats = $derived([
     {
       id: 'round-robin',
-      name: 'ROUND ROBIN',
-      desc: 'Every team plays every other team. Most games, fairest standings.',
+      name: t('format.roundRobin').toUpperCase(),
+      desc: t('setup.rrDesc'),
       icon: '🔄',
     },
     {
       id: 'group-playoff',
-      name: 'GROUP + PLAYOFF',
-      desc: 'Group stage round-robin, then top teams advance to elimination bracket.',
+      name: t('format.groupPlayoff').toUpperCase(),
+      desc: t('setup.gpDesc'),
       icon: '🏆',
     },
     {
       id: 'single-elim',
-      name: 'SINGLE ELIMINATION',
-      desc: 'Lose once and you\'re out. Fast and dramatic.',
+      name: t('format.singleElim').toUpperCase(),
+      desc: t('setup.seDesc'),
       icon: '⚡',
     },
     {
       id: 'double-elim',
-      name: 'DOUBLE ELIMINATION',
-      desc: 'Two chances before elimination. Winners and losers brackets.',
+      name: t('format.doubleElim').toUpperCase(),
+      desc: t('setup.deDesc'),
       icon: '💀',
     },
-  ]
+  ])
 
   function selectFormat(id) {
     updateSettings({ format: id })
@@ -40,7 +41,7 @@
 </script>
 
 <div class="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
-  <h1 class="text-4xl md:text-5xl text-cornholio-gold mb-2">TOURNAMENT SETUP</h1>
+  <h1 class="text-4xl md:text-5xl text-cornholio-gold mb-2">{t('setup.title')}</h1>
 
   <!-- Tournament Name -->
   <div class="w-full max-w-md mb-6">
@@ -48,7 +49,7 @@
       type="text"
       value={state.name}
       oninput={(e) => setName(e.target.value)}
-      placeholder="Tournament name..."
+      placeholder={t('home.namePlaceholder')}
       class="w-full bg-transparent border-b-2 border-cornholio-gold/30 text-tp-white text-center text-lg
         px-2 py-2 focus:border-cornholio-gold focus:outline-none placeholder-tp-cream/30"
     />
@@ -57,7 +58,7 @@
   <!-- Tournament Type -->
   <div class="w-full max-w-md mb-6">
     <div class="bg-cornholio-gray/50 rounded-lg p-4">
-      <label class="text-tp-cream text-sm mb-2 block">Tournament Type</label>
+      <label class="text-tp-cream text-sm mb-2 block">{t('setup.tournamentType')}</label>
       <div class="flex gap-2">
         <button
           onclick={() => updateSettings({ tournamentType: 'teams', numCourts: 1 })}
@@ -66,8 +67,8 @@
               ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
               : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
         >
-          Teams
-          <span class="block text-[10px] font-body {state.settings.tournamentType === 'teams' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Pairs of 2 players</span>
+          {t('setup.teams')}
+          <span class="block text-[10px] font-body {state.settings.tournamentType === 'teams' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">{t('setup.teamsDesc')}</span>
         </button>
         <button
           onclick={() => updateSettings({ tournamentType: 'singles', numCourts: 2 })}
@@ -76,14 +77,14 @@
               ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
               : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
         >
-          Singles
-          <span class="block text-[10px] font-body {state.settings.tournamentType === 'singles' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">1v1 matchups</span>
+          {t('setup.singles')}
+          <span class="block text-[10px] font-body {state.settings.tournamentType === 'singles' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">{t('setup.singlesDesc')}</span>
         </button>
       </div>
     </div>
   </div>
 
-  <p class="text-tp-cream/60 mb-8">Choose your format, mortal.</p>
+  <p class="text-tp-cream/60 mb-8">{t('setup.chooseFormat')}</p>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
     {#each formats as fmt}
@@ -104,7 +105,7 @@
   <div class="w-full max-w-md space-y-4 mb-8">
     <!-- Game Mode -->
     <div class="bg-cornholio-gray/50 rounded-lg p-4">
-      <label class="text-tp-cream text-sm mb-2 block">Game Mode</label>
+      <label class="text-tp-cream text-sm mb-2 block">{t('setup.gameMode')}</label>
       <div class="flex gap-2">
         <button
           onclick={() => updateSettings({ gameMode: 'standard' })}
@@ -113,8 +114,8 @@
               ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
               : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
         >
-          Standard
-          <span class="block text-[10px] font-body {state.settings.gameMode === 'standard' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Play to target score</span>
+          {t('mode.standard')}
+          <span class="block text-[10px] font-body {state.settings.gameMode === 'standard' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">{t('setup.standardDesc')}</span>
         </button>
         <button
           onclick={() => updateSettings({ gameMode: 'quick' })}
@@ -123,8 +124,8 @@
               ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
               : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
         >
-          Quick
-          <span class="block text-[10px] font-body {state.settings.gameMode === 'quick' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Fixed frames, count points</span>
+          {t('mode.quick')}
+          <span class="block text-[10px] font-body {state.settings.gameMode === 'quick' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">{t('setup.quickDesc')}</span>
         </button>
       </div>
     </div>
@@ -132,22 +133,22 @@
     {#if state.settings.gameMode === 'quick'}
       <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
         <p class="text-tp-cream/60 text-xs leading-relaxed">
-          <span class="text-cornholio-gold font-bold">Quick Mode:</span>
-          Play a fixed number of frames per game. Highest cancellation score wins. Draws possible in group stage.
+          <span class="text-cornholio-gold font-bold">{t('setup.quickModeInfo')}</span>
+          {t('setup.quickModeInfoText')}
         </p>
       </div>
     {:else}
       <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
         <p class="text-tp-cream/60 text-xs leading-relaxed">
-          <span class="text-cornholio-gold font-bold">Standard Mode:</span>
-          Play until one team reaches the target score. Optional skunk rule ends the game early if one team pulls ahead.
+          <span class="text-cornholio-gold font-bold">{t('setup.standardModeInfo')}</span>
+          {t('setup.standardModeInfoText')}
         </p>
       </div>
     {/if}
 
     <!-- Scoring Mode -->
     <div class="bg-cornholio-gray/50 rounded-lg p-4">
-      <label class="text-tp-cream text-sm mb-2 block">Scoring Mode</label>
+      <label class="text-tp-cream text-sm mb-2 block">{t('setup.scoringMode')}</label>
       <div class="flex gap-2">
         <button
           onclick={() => updateSettings({ defaultScoringMode: 'quick' })}
@@ -156,8 +157,8 @@
               ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
               : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
         >
-          Total
-          <span class="block text-[10px] font-body {state.settings.defaultScoringMode === 'quick' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Enter final score</span>
+          {t('setup.total')}
+          <span class="block text-[10px] font-body {state.settings.defaultScoringMode === 'quick' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">{t('setup.totalDesc')}</span>
         </button>
         <button
           onclick={() => updateSettings({ defaultScoringMode: 'frames' })}
@@ -166,26 +167,26 @@
               ? 'bg-cornholio-gold text-cornholio-dark border-cornholio-gold'
               : 'bg-transparent text-tp-cream/60 border-cornholio-gray-light/50 hover:border-cornholio-gold/50'}"
         >
-          Frame-by-frame
-          <span class="block text-[10px] font-body {state.settings.defaultScoringMode === 'frames' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Enter per frame</span>
+          {t('setup.frameByFrame')}
+          <span class="block text-[10px] font-body {state.settings.defaultScoringMode === 'frames' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">{t('setup.frameByFrameDesc')}</span>
         </button>
       </div>
     </div>
     <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
       <p class="text-tp-cream/60 text-xs leading-relaxed">
         {#if state.settings.defaultScoringMode === 'frames'}
-          <span class="text-cornholio-gold font-bold">Frame-by-Frame:</span>
-          Enter each team's raw points per frame (hole = 3, board = 1). The app calculates cancellation scoring automatically.
+          <span class="text-cornholio-gold font-bold">{t('setup.frameByFrameInfo')}</span>
+          {t('setup.frameByFrameInfoText')}
         {:else}
-          <span class="text-cornholio-gold font-bold">Total:</span>
-          Enter each team's final cancelled score after all frames are played.
+          <span class="text-cornholio-gold font-bold">{t('setup.totalInfo')}</span>
+          {t('setup.totalInfoText')}
         {/if}
       </p>
     </div>
 
     {#if state.settings.gameMode === 'standard'}
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
-        <label class="text-tp-cream" for="pointsToWin">Points to Win</label>
+        <label class="text-tp-cream" for="pointsToWin">{t('setup.pointsToWin')}</label>
         <input
           id="pointsToWin"
           type="number"
@@ -200,12 +201,12 @@
 
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
         <div>
-          <label class="text-tp-cream" for="skunkRule">Skunk Rule</label>
-          <p class="text-tp-cream/50 text-xs">Win instantly if leading by {state.settings.skunkDiff}+</p>
+          <label class="text-tp-cream" for="skunkRule">{t('setup.skunkRule')}</label>
+          <p class="text-tp-cream/50 text-xs">{t('setup.skunkRuleDesc', { diff: state.settings.skunkDiff })}</p>
         </div>
         <button
           id="skunkRule"
-          aria-label="Toggle skunk rule"
+          aria-label={t('setup.toggleSkunk')}
           onclick={() => updateSettings({ skunkRule: !state.settings.skunkRule })}
           class="w-14 h-8 rounded-full transition-colors duration-200 cursor-pointer border-none
             {state.settings.skunkRule ? 'bg-cornholio-gold' : 'bg-cornholio-gray-light'}"
@@ -220,8 +221,8 @@
       {#if state.settings.format === 'round-robin' || state.settings.format === 'group-playoff'}
         <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
           <div>
-            <label class="text-tp-cream" for="numFramesGroup">Group / Round Robin</label>
-            <p class="text-tp-cream/50 text-xs">Frames per game</p>
+            <label class="text-tp-cream" for="numFramesGroup">{t('setup.groupRoundRobin')}</label>
+            <p class="text-tp-cream/50 text-xs">{t('setup.framesPerGame')}</p>
           </div>
           <input
             id="numFramesGroup"
@@ -239,8 +240,8 @@
       {#if state.settings.format !== 'round-robin'}
         <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
           <div>
-            <label class="text-tp-cream" for="numFramesPlayoff">Playoff Rounds</label>
-            <p class="text-tp-cream/50 text-xs">Frames per game</p>
+            <label class="text-tp-cream" for="numFramesPlayoff">{t('setup.playoffRounds')}</label>
+            <p class="text-tp-cream/50 text-xs">{t('setup.framesPerGame')}</p>
           </div>
           <input
             id="numFramesPlayoff"
@@ -256,8 +257,8 @@
 
         <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
           <div>
-            <label class="text-tp-cream" for="numFramesFinals">Finals / Championship</label>
-            <p class="text-tp-cream/50 text-xs">Frames per game</p>
+            <label class="text-tp-cream" for="numFramesFinals">{t('setup.finalsChampionship')}</label>
+            <p class="text-tp-cream/50 text-xs">{t('setup.framesPerGame')}</p>
           </div>
           <input
             id="numFramesFinals"
@@ -277,8 +278,8 @@
     {#if state.settings.gameMode === 'standard' && (state.settings.format === 'round-robin' || state.settings.format === 'group-playoff')}
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
         <div>
-          <label class="text-tp-cream" for="bestOfGroup">Group / Round Robin</label>
-          <p class="text-tp-cream/50 text-xs">Games per matchup</p>
+          <label class="text-tp-cream" for="bestOfGroup">{t('setup.groupRoundRobin')}</label>
+          <p class="text-tp-cream/50 text-xs">{t('setup.gamesPerMatchup')}</p>
         </div>
         <select
           id="bestOfGroup"
@@ -287,9 +288,9 @@
           class="bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
             text-cornholio-gold font-bold text-lg cursor-pointer"
         >
-          <option value={1}>Bo1</option>
-          <option value={3}>Bo3</option>
-          <option value={5}>Bo5</option>
+          <option value={1}>{t('setup.bo1')}</option>
+          <option value={3}>{t('setup.bo3')}</option>
+          <option value={5}>{t('setup.bo5')}</option>
         </select>
       </div>
     {/if}
@@ -297,8 +298,8 @@
     {#if state.settings.gameMode === 'standard' && state.settings.format !== 'round-robin'}
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
         <div>
-          <label class="text-tp-cream" for="bestOfPlayoff">Playoff Rounds</label>
-          <p class="text-tp-cream/50 text-xs">Games per playoff matchup</p>
+          <label class="text-tp-cream" for="bestOfPlayoff">{t('setup.playoffRounds')}</label>
+          <p class="text-tp-cream/50 text-xs">{t('setup.gamesPerPlayoff')}</p>
         </div>
         <select
           id="bestOfPlayoff"
@@ -307,16 +308,16 @@
           class="bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
             text-cornholio-gold font-bold text-lg cursor-pointer"
         >
-          <option value={1}>Bo1</option>
-          <option value={3}>Bo3</option>
-          <option value={5}>Bo5</option>
+          <option value={1}>{t('setup.bo1')}</option>
+          <option value={3}>{t('setup.bo3')}</option>
+          <option value={5}>{t('setup.bo5')}</option>
         </select>
       </div>
 
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
         <div>
-          <label class="text-tp-cream" for="bestOfFinals">Finals / Championship</label>
-          <p class="text-tp-cream/50 text-xs">Games in the final matchup</p>
+          <label class="text-tp-cream" for="bestOfFinals">{t('setup.finalsChampionship')}</label>
+          <p class="text-tp-cream/50 text-xs">{t('setup.gamesInFinal')}</p>
         </div>
         <select
           id="bestOfFinals"
@@ -325,9 +326,9 @@
           class="bg-cornholio-dark border border-cornholio-gold/50 rounded px-3 py-2
             text-cornholio-gold font-bold text-lg cursor-pointer"
         >
-          <option value={1}>Bo1</option>
-          <option value={3}>Bo3</option>
-          <option value={5}>Bo5</option>
+          <option value={1}>{t('setup.bo1')}</option>
+          <option value={3}>{t('setup.bo3')}</option>
+          <option value={5}>{t('setup.bo5')}</option>
         </select>
       </div>
     {/if}
@@ -335,8 +336,8 @@
     {#if state.settings.format === 'group-playoff'}
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
         <div>
-          <label class="text-tp-cream" for="numGroups">Number of Groups</label>
-          <p class="text-tp-cream/50 text-xs">Each group needs at least 2 teams</p>
+          <label class="text-tp-cream" for="numGroups">{t('setup.numGroups')}</label>
+          <p class="text-tp-cream/50 text-xs">{t('setup.minTeamsPerGroup')}</p>
         </div>
         <input
           id="numGroups"
@@ -351,7 +352,7 @@
       </div>
 
       <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
-        <label class="text-tp-cream" for="advancePerGroup">Advance per Group</label>
+        <label class="text-tp-cream" for="advancePerGroup">{t('setup.advancePerGroup')}</label>
         <input
           id="advancePerGroup"
           type="number"
@@ -366,10 +367,8 @@
 
       <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
         <p class="text-tp-cream/60 text-xs leading-relaxed">
-          <span class="text-cornholio-gold font-bold">Tip:</span>
-          For {state.settings.numGroups} groups you need at least {state.settings.numGroups * 2} teams
-          ({state.settings.numGroups * 2 * 2}+ players). Recommended: {state.settings.numGroups * 3}–{state.settings.numGroups * 4} teams
-          for balanced groups.
+          <span class="text-cornholio-gold font-bold">{t('setup.tip')}</span>
+          {t('setup.tipText', { numGroups: state.settings.numGroups, minTeams: state.settings.numGroups * 2, minPlayers: state.settings.numGroups * 2 * 2, recMin: state.settings.numGroups * 3, recMax: state.settings.numGroups * 4 })}
         </p>
       </div>
     {/if}
@@ -379,9 +378,9 @@
   <div class="w-full max-w-md mb-8">
     <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
       <div>
-        <label class="text-tp-cream" for="numCourts">Number of Courts</label>
+        <label class="text-tp-cream" for="numCourts">{t('setup.numCourts')}</label>
         <p class="text-tp-cream/50 text-xs">
-          {state.settings.numCourts > 1 ? `${state.settings.numCourts} matches can run in parallel` : 'One match at a time'}
+          {state.settings.numCourts > 1 ? t('setup.courtsParallel', { n: state.settings.numCourts }) : t('setup.courtsSingle')}
         </p>
       </div>
       <input
@@ -403,6 +402,6 @@
       hover:bg-cornholio-gold-light hover:scale-105 transition-all duration-200
       cursor-pointer shadow-lg"
   >
-    NEXT →
+    {t('common.next')}
   </button>
 </div>

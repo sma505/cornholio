@@ -1,5 +1,6 @@
 <script>
   import { getState, addPlayer, removePlayer, setStep, createTeamsFromPlayers } from '../stores/tournament.svelte.js'
+  import { t } from '../i18n/index.svelte.js'
 
   const tournament = getState()
   let newName = $state('')
@@ -47,11 +48,11 @@
 </script>
 
 <div class="flex-1 flex flex-col items-center px-4 py-8 max-w-2xl mx-auto w-full">
-  <h1 class="text-4xl md:text-5xl text-cornholio-gold mb-2">ADD PLAYERS</h1>
+  <h1 class="text-4xl md:text-5xl text-cornholio-gold mb-2">{t('players.title')}</h1>
   <p class="text-tp-cream/60 mb-8">
-    {tournament.players.length} player{tournament.players.length !== 1 ? 's' : ''} added
+    {t('players.count').split(' | ')[tournament.players.length === 1 ? 0 : 1].replace('{count}', tournament.players.length)}
     {#if tournament.players.length < minPlayers()}
-      <span class="text-cornholio-red"> (need at least {minPlayers()})</span>
+      <span class="text-cornholio-red"> {t('players.needAtLeast', { min: minPlayers() })}</span>
     {/if}
   </p>
 
@@ -60,7 +61,7 @@
       type="text"
       bind:value={newName}
       onkeydown={handleKeydown}
-      placeholder="Enter player name..."
+      placeholder={t('players.placeholder')}
       class="flex-1 bg-cornholio-dark border-2 border-cornholio-gold/50 rounded-lg px-4 py-3
         text-tp-white text-lg placeholder-tp-cream/30 focus:border-cornholio-gold
         focus:outline-none transition-colors"
@@ -72,7 +73,7 @@
         hover:bg-cornholio-gold-light transition-all cursor-pointer
         disabled:opacity-30 disabled:cursor-not-allowed"
     >
-      ADD
+      {t('players.add')}
     </button>
   </div>
 
@@ -101,7 +102,7 @@
       class="bg-cornholio-gray text-tp-cream font-heading text-xl px-8 py-3 rounded-lg
         hover:bg-cornholio-gray-light transition-all cursor-pointer border border-cornholio-gray-light"
     >
-      ← BACK
+      {t('common.back')}
     </button>
     <button
       onclick={next}
@@ -110,7 +111,7 @@
         hover:bg-cornholio-gold-light hover:scale-105 transition-all cursor-pointer shadow-lg
         disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
     >
-      NEXT →
+      {isSingles ? t('players.startTournament') : t('common.next')}
     </button>
   </div>
 </div>

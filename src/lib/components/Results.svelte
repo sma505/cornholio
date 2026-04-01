@@ -1,5 +1,6 @@
 <script>
   import { getState, goHome } from '../stores/tournament.svelte.js'
+  import { t } from '../i18n/index.svelte.js'
   import { exportTournament } from '../utils/persistence.js'
   import { calculateStandings } from '../utils/roundrobin.js'
 
@@ -66,10 +67,10 @@
   }
 
   function roundName(ri, total) {
-    if (ri === total - 1) return 'Final'
-    if (ri === total - 2) return 'Semifinals'
-    if (ri === total - 3) return 'Quarterfinals'
-    return `Round ${ri + 1}`
+    if (ri === total - 1) return t('round.final')
+    if (ri === total - 2) return t('round.semifinals')
+    if (ri === total - 3) return t('round.quarterfinals')
+    return t('round.number', { n: ri + 1 })
   }
 </script>
 
@@ -92,14 +93,14 @@
   <!-- Champion Display -->
   <div class="text-center mb-10">
     <h1 class="text-3xl md:text-5xl text-cornholio-gold mb-4 leading-tight">
-      🏆 THE GREAT CORNHOLIO CHAMPION! 🏆
+      {t('results.championTitle')}
     </h1>
     <div class="text-5xl md:text-8xl text-cornholio-gold font-heading mb-4 drop-shadow-lg"
       style="text-shadow: 0 0 40px rgba(245, 197, 66, 0.4), 0 0 80px rgba(245, 197, 66, 0.2);">
       {championName}
     </div>
     <p class="text-tp-cream/70 text-lg md:text-xl italic max-w-lg mx-auto">
-      "I am the greatest! I am Cornholio!"
+      "{t('results.championQuote')}"
     </p>
   </div>
 
@@ -107,7 +108,7 @@
   {#if hasStandings}
     {#if tournament.settings.format === 'group-playoff'}
       <div class="w-full mb-8">
-        <h2 class="text-2xl text-cornholio-gold mb-4">Group Standings</h2>
+        <h2 class="text-2xl text-cornholio-gold mb-4">{t('results.groupStandings')}</h2>
         {#each groupStandingsData() as { group, standings: groupRows }}
           <div class="mb-6">
             <h3 class="text-lg text-cornholio-gold/80 mb-2">{group.name}</h3>
@@ -117,7 +118,7 @@
       </div>
     {:else}
       <div class="w-full mb-8">
-        <h2 class="text-2xl text-cornholio-gold mb-4">Final Standings</h2>
+        <h2 class="text-2xl text-cornholio-gold mb-4">{t('results.finalStandings')}</h2>
         {@render standingsTable(standings())}
       </div>
     {/if}
@@ -127,7 +128,7 @@
   {#if hasBracket && tournament.bracket}
     <div class="w-full mb-8">
       <h2 class="text-2xl text-cornholio-gold mb-4">
-        {tournament.settings.format === 'group-playoff' ? 'Playoff Bracket' : 'Final Bracket'}
+        {tournament.settings.format === 'group-playoff' ? t('results.playoffBracket') : t('results.finalBracket')}
       </h2>
       {@render completedBracket(tournament.bracket)}
     </div>
@@ -141,7 +142,7 @@
         text-lg px-6 py-3 rounded-lg hover:bg-cornholio-gold hover:text-cornholio-dark
         transition-all cursor-pointer"
     >
-      EXPORT RESULTS (JSON)
+      {t('results.exportJson')}
     </button>
     <button
       onclick={handlePrint}
@@ -149,14 +150,14 @@
         text-lg px-6 py-3 rounded-lg hover:bg-tp-cream/10
         transition-all cursor-pointer"
     >
-      PRINT RESULTS
+      {t('results.print')}
     </button>
     <button
       onclick={handleNewTournament}
       class="bg-cornholio-gold text-cornholio-dark font-heading text-lg px-6 py-3 rounded-lg
         hover:bg-cornholio-gold-light hover:scale-105 transition-all cursor-pointer shadow-lg"
     >
-      NEW TOURNAMENT
+      {t('results.newTournament')}
     </button>
   </div>
 </div>
@@ -168,19 +169,19 @@
     <table class="w-full border-collapse">
       <thead>
         <tr class="bg-cornholio-gray/50 text-tp-cream/80 text-sm">
-          <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">#</th>
-          <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">Team</th>
+          <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">{t('standings.rank')}</th>
+          <th class="text-left px-3 py-2 border border-cornholio-gray-light/30">{t('standings.team')}</th>
           {#if isQuickMode}
-            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">Pts</th>
+            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.pts')}</th>
           {/if}
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">W</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.w')}</th>
           {#if isQuickMode}
-            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">D</th>
+            <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.d')}</th>
           {/if}
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">L</th>
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">PF</th>
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">PA</th>
-          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">Diff</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.l')}</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.pf')}</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.pa')}</th>
+          <th class="text-center px-3 py-2 border border-cornholio-gray-light/30">{t('standings.diff')}</th>
         </tr>
       </thead>
       <tbody>
@@ -217,18 +218,18 @@
   <div class="space-y-6">
     {#if bracket.winners}
       {#if tournament.settings.format === 'double-elim'}
-        <h3 class="text-lg text-cornholio-gold/80">Winners Bracket</h3>
+        <h3 class="text-lg text-cornholio-gold/80">{t('results.winnersBracket')}</h3>
       {/if}
       {@render completedBracketRounds(bracket.winners)}
     {:else if bracket.rounds}
       {@render completedBracketRounds(bracket.rounds)}
     {/if}
     {#if bracket.losers && bracket.losers.length > 0}
-      <h3 class="text-lg text-cornholio-gold/80 mt-4">Losers Bracket</h3>
+      <h3 class="text-lg text-cornholio-gold/80 mt-4">{t('results.losersBracket')}</h3>
       {@render completedBracketRounds(bracket.losers)}
     {/if}
     {#if bracket.finals}
-      <h3 class="text-lg text-cornholio-gold/80 mt-4">Grand Finals</h3>
+      <h3 class="text-lg text-cornholio-gold/80 mt-4">{t('results.grandFinals')}</h3>
       {@render completedBracketRounds([bracket.finals])}
     {/if}
   </div>
