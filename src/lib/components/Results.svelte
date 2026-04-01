@@ -64,6 +64,13 @@
   function handleNewTournament() {
     goHome()
   }
+
+  function roundName(ri, total) {
+    if (ri === total - 1) return 'Final'
+    if (ri === total - 2) return 'Semifinals'
+    if (ri === total - 3) return 'Quarterfinals'
+    return `Round ${ri + 1}`
+  }
 </script>
 
 <!-- Celebration Overlay -->
@@ -157,7 +164,7 @@
 <!-- Standings table snippet -->
 {#snippet standingsTable(rows)}
   {@const isQuickMode = tournament.settings.gameMode === 'quick'}
-  <div class="overflow-x-auto">
+  <div class="overflow-x-auto overflow-y-hidden">
     <table class="w-full border-collapse">
       <thead>
         <tr class="bg-cornholio-gray/50 text-tp-cream/80 text-sm">
@@ -228,11 +235,11 @@
 {/snippet}
 
 {#snippet completedBracketRounds(rounds)}
-  <div class="flex gap-4 overflow-x-auto pb-2">
+  <div class="bracket-scroll flex gap-4">
     {#each rounds as round, ri}
-      <div class="flex flex-col gap-3 min-w-[240px]">
+      <div class="flex flex-col gap-3 flex-1 min-w-[180px]">
         <h4 class="text-xs text-cornholio-gold/60 font-heading">
-          {round.name || `Round ${ri + 1}`}
+          {round.name || roundName(ri, rounds.length)}
         </h4>
         {#each round.matches as match}
           <div class="bg-cornholio-navy/50 border border-cornholio-gray-light/30 rounded-lg p-2.5">
@@ -253,18 +260,20 @@
           </div>
         {/each}
       </div>
-      {#if ri < rounds.length - 1}
-        <div class="flex flex-col justify-around py-6">
-          {#each { length: Math.max(1, Math.ceil(round.matches.length / 2)) } as _}
-            <div class="w-3 border-t-2 border-cornholio-gold/20 my-3"></div>
-          {/each}
-        </div>
-      {/if}
     {/each}
   </div>
 {/snippet}
 
 <style>
+  .bracket-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  .bracket-scroll:hover {
+    scrollbar-width: thin;
+  }
+
   .celebration-particle {
     animation: float-up linear forwards;
     opacity: 0;

@@ -14,6 +14,13 @@
 
   const numCourts = $derived(tournament.settings.numCourts || 1)
 
+  function roundName(ri, total) {
+    if (ri === total - 1) return 'Final'
+    if (ri === total - 2) return 'Semifinals'
+    if (ri === total - 3) return 'Quarterfinals'
+    return `Round ${ri + 1}`
+  }
+
   // Assign courts to unplayed matches (round-robin distribution)
   function assignCourts(matches) {
     if (numCourts <= 1) return
@@ -252,6 +259,7 @@
           const standings = calculateStandings(groupMatches, group.teamIds)
           advancingTeams.push(...standings.slice(0, tournament.settings.advancePerGroup).map(s => s.teamId))
         }
+        if (advancingTeams.length < 2) return
         setBracket(generateSingleElimBracket(advancingTeams))
       }
     }
@@ -662,7 +670,7 @@
       {#each rounds as round, ri}
         <div>
           <h4 class="text-xs text-cornholio-gold/50 font-heading text-center mb-2">
-            {round.name || (ri === rounds.length - 1 ? 'Final' : `Round ${ri + 1}`)}
+            {round.name || roundName(ri, rounds.length)}
           </h4>
           <div class="flex flex-col gap-3 max-w-sm mx-auto">
             {#each round.matches as match}
@@ -678,7 +686,7 @@
       {#each rounds as round, ri}
         <div class="flex flex-col gap-3 min-w-[200px] max-w-[320px] flex-1">
           <h4 class="text-xs text-cornholio-gold/50 font-heading text-center">
-            {round.name || (ri === rounds.length - 1 ? 'Final' : `Round ${ri + 1}`)}
+            {round.name || roundName(ri, rounds.length)}
           </h4>
           {#each round.matches as match}
             {@render bracketMatchCard(match)}
@@ -722,7 +730,7 @@
   <div class="flex flex-col gap-4 md:hidden pb-4">
     {#each rounds as round, ri}
       <div>
-        <h3 class="text-sm text-cornholio-gold/70 font-heading text-center mb-2">{round.name || `Round ${ri + 1}`}</h3>
+        <h3 class="text-sm text-cornholio-gold/70 font-heading text-center mb-2">{round.name || roundName(ri, rounds.length)}</h3>
         <div class="flex flex-col gap-3 max-w-sm mx-auto">
           {#each round.matches as match}
             {@render bracketMatchCard(match)}
@@ -735,7 +743,7 @@
   <div class="hidden md:flex gap-4 overflow-x-auto pb-4">
     {#each rounds as round, ri}
       <div class="flex flex-col gap-4 min-w-[200px] max-w-[320px] flex-1">
-        <h3 class="text-sm text-cornholio-gold/70 font-heading">{round.name || `Round ${ri + 1}`}</h3>
+        <h3 class="text-sm text-cornholio-gold/70 font-heading">{round.name || roundName(ri, rounds.length)}</h3>
         {#each round.matches as match}
           {@render bracketMatchCard(match)}
         {/each}

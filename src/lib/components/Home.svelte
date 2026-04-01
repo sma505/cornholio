@@ -1,8 +1,10 @@
 <script>
   import { createNewTournament, loadExistingTournament, loadState, getState } from '../stores/tournament.svelte.js'
   import { getTournamentIndex, deleteTournament, importTournament, exportTournament, loadTournament } from '../utils/persistence.js'
+  import HelpModal from './ui/HelpModal.svelte'
 
   const tournament = getState()
+  let helpOpen = $state(false)
 
   let tournaments = $state([])
   let newName = $state('')
@@ -89,6 +91,11 @@
     <div class="text-6xl mb-3">🌽</div>
     <h1 class="text-4xl md:text-5xl text-cornholio-gold font-heading leading-tight">CORNHOLIO</h1>
     <p class="text-tp-cream/50 text-sm mt-1">Tournament Manager</p>
+    <button
+      onclick={() => helpOpen = true}
+      class="mt-3 text-cornholio-gold/60 hover:text-cornholio-gold bg-transparent border border-cornholio-gold/30
+        hover:border-cornholio-gold/60 rounded-full px-4 py-1 cursor-pointer transition-colors text-sm"
+    >? Help</button>
   </div>
 
   <!-- Create New -->
@@ -202,3 +209,5 @@
     class="hidden"
   />
 </div>
+
+<HelpModal bind:open={helpOpen} />

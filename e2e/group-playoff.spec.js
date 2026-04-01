@@ -21,7 +21,7 @@ test.describe('Group + Playoff', () => {
     await expect(page.getByText('Group B')).toBeVisible()
   })
 
-  test('group validation blocks too many groups', async ({ page }) => {
+  test('group validation blocks too few players', async ({ page }) => {
     await freshStart(page)
     await createTournament(page, 'GP-Fail')
     await selectFormat(page, 'group-playoff')
@@ -30,14 +30,10 @@ test.describe('Group + Playoff', () => {
     await numGroups.dispatchEvent('input')
     await clickNext(page)
     await addPlayers(page, ['A', 'B', 'C', 'D'])
-    await clickNext(page)
-    // Shuffle teams
-    await page.getByRole('button', { name: 'SHUFFLE TEAMS' }).click()
-    await page.waitForTimeout(200)
-    // START should be disabled
-    const startBtn = page.getByRole('button', { name: 'START TOURNAMENT →' })
-    await expect(startBtn).toBeDisabled()
-    await expect(page.getByText('needs at least')).toBeVisible()
+    // NEXT should be disabled — 4 groups need at least 16 players (4 groups * 2 teams * 2 players)
+    const nextBtn = page.getByRole('button', { name: 'NEXT →' })
+    await expect(nextBtn).toBeDisabled()
+    await expect(page.getByText('need at least')).toBeVisible()
   })
 
   test('completes group stage and transitions to bracket', async ({ page }) => {
@@ -64,6 +60,6 @@ test.describe('Group + Playoff', () => {
     await page.getByRole('button', { name: /CONTINUE|VIEW/ }).click()
     await page.waitForTimeout(500)
     await expect(page.getByRole('heading', { name: 'Playoff Bracket' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Final' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Final' }).first()).toBeVisible()
   })
 })

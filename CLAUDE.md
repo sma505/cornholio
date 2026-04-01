@@ -15,7 +15,7 @@ A single-page webapp for creating and running cornhole tournaments with Beavis &
 ## Commands
 - `npm run dev` — dev server (base path `/cornholio/`)
 - `npm run build` — production build to `dist/`
-- `npm run test:run` — run unit tests (89 tests, <1s)
+- `npm run test:run` — run unit tests (178 tests, <1s)
 - `npm run test:e2e` — run E2E tests (28 tests, ~30s)
 - `npm run test` — vitest in watch mode
 
@@ -106,12 +106,13 @@ src/
     components/
       Home.svelte                     # Tournament list: create, continue, export, delete
       TournamentSetup.svelte          # Type, format, game mode, courts, rules, tournament name
-      PlayerEntry.svelte              # Add/remove players (min 2 singles, 3 teams)
+      PlayerEntry.svelte              # Add/remove players, format-aware min validation
       TeamPairing.svelte              # Drag-drop or shuffle into teams of 2 (teams only)
       GamePlay.svelte                 # Score entry, standings, centered bracket, court tabs
       FrameScorer.svelte              # Frame-by-frame raw points entry with running totals
-      Results.svelte                  # Champion display, export, celebration
-      ui/CornholioHeader.svelte       # Fixed-height header with step nav and rotating quotes
+      Results.svelte                  # Champion display, bracket recap, export, celebration
+      ui/CornholioHeader.svelte       # Header with step nav, format/mode label, help button
+      ui/HelpModal.svelte             # Tabbed help: scoring, formats, game modes, settings
 tests/
   scoring.test.js                     # 38 unit tests
   roundrobin.test.js                  # 23 unit tests
@@ -130,7 +131,7 @@ e2e/
 ### Theming
 - **Colors**: Dark blue (#1a1a4e) bg, gold (#f5c542) accents, off-white (#f0e6d3) text
 - **Font**: Bangers (Google Fonts) for headings
-- **Quotes**: Rotating Cornholio quotes in header every 5 seconds (fixed height, no layout shift)
+- **Header**: Shows current format + game mode (e.g. "Single Elim / Quick"), help button, step nav. No rotating quotes (removed for space).
 
 ## Conventions
 - All components use Svelte 5 runes, not legacy stores
@@ -139,7 +140,8 @@ e2e/
 - `font-heading` class for Bangers font headings
 - `getMatchResult()` returns `{ isDraw: true }` when scores are equal — always check before accessing `winnerId`
 - `advanceBracket()` takes `(bracket, matchId, winnerId, loserId)` — NOT scores
-- Group validation: numGroups * 2 minimum teams required
+- Player validation is format-aware: PlayerEntry enforces min players based on format (e.g. group-playoff needs `numGroups * 2` teams, teams mode doubles that for player pairs)
+- Bracket round names: auto-generated as "Quarterfinals", "Semifinals", "Final" (counting back from last round) via `roundName(ri, total)` helper in both GamePlay and Results
 - Quick mode forces Bo1 — `getBestOf()` returns 1 when `gameMode === 'quick'`
 - `getNumFrames(match)` resolves per-stage frame count based on match context
 - Don't mutate `$state` inside template expressions or `$derived` — use read-only functions for templates, mutating functions only in event handlers

@@ -5,7 +5,7 @@ test.describe('Round Robin - Standard', () => {
   test('4 players creates 2 teams with 1 match', async ({ page }) => {
     await quickSetup(page, { name: 'RR-4p', playerNames: ['A', 'B', 'C', 'D'] })
     await expect(page.getByText('GAME ON!')).toBeVisible()
-    await expect(page.getByText('Round Robin')).toBeVisible()
+    await expect(page.locator('main').getByText('Round Robin')).toBeVisible()
     // Should have 1 match (2 teams)
     await expect(page.getByRole('button', { name: 'Submit' })).toHaveCount(1)
   })

@@ -129,6 +129,22 @@
       </div>
     </div>
 
+    {#if state.settings.gameMode === 'quick'}
+      <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
+        <p class="text-tp-cream/60 text-xs leading-relaxed">
+          <span class="text-cornholio-gold font-bold">Quick Mode:</span>
+          Play a fixed number of frames per game. Highest cancellation score wins. Draws possible in group stage.
+        </p>
+      </div>
+    {:else}
+      <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
+        <p class="text-tp-cream/60 text-xs leading-relaxed">
+          <span class="text-cornholio-gold font-bold">Standard Mode:</span>
+          Play until one team reaches the target score. Optional skunk rule ends the game early if one team pulls ahead.
+        </p>
+      </div>
+    {/if}
+
     <!-- Scoring Mode -->
     <div class="bg-cornholio-gray/50 rounded-lg p-4">
       <label class="text-tp-cream text-sm mb-2 block">Scoring Mode</label>
@@ -154,11 +170,15 @@
           <span class="block text-[10px] font-body {state.settings.defaultScoringMode === 'frames' ? 'text-cornholio-dark/60' : 'text-tp-cream/30'}">Enter per frame</span>
         </button>
       </div>
-      <p class="text-tp-cream/40 text-xs mt-2 leading-relaxed">
+    </div>
+    <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3">
+      <p class="text-tp-cream/60 text-xs leading-relaxed">
         {#if state.settings.defaultScoringMode === 'frames'}
-          Enter each team's <span class="text-tp-cream/60">raw points per frame</span> (hole = 3, board = 1). The app calculates cancellation scoring automatically.
+          <span class="text-cornholio-gold font-bold">Frame-by-Frame:</span>
+          Enter each team's raw points per frame (hole = 3, board = 1). The app calculates cancellation scoring automatically.
         {:else}
-          Enter each team's <span class="text-tp-cream/60">final cancelled score</span> after all frames are played.
+          <span class="text-cornholio-gold font-bold">Total:</span>
+          Enter each team's final cancelled score after all frames are played.
         {/if}
       </p>
     </div>
@@ -197,13 +217,6 @@
         </button>
       </div>
     {:else}
-      <div class="bg-cornholio-navy/50 border border-cornholio-gold/20 rounded-lg p-3 mb-1">
-        <p class="text-tp-cream/60 text-xs leading-relaxed">
-          <span class="text-cornholio-gold font-bold">Quick Mode:</span>
-          Play a fixed number of frames per game. Highest cancellation score wins. Draws possible in group stage.
-        </p>
-      </div>
-
       {#if state.settings.format === 'round-robin' || state.settings.format === 'group-playoff'}
         <div class="flex items-center justify-between bg-cornholio-gray/50 rounded-lg p-4">
           <div>

@@ -5,7 +5,17 @@
   let newName = $state('')
 
   const isSingles = $derived(tournament.settings.tournamentType === 'singles')
-  const minPlayers = $derived(isSingles ? 2 : 3)
+  const minPlayers = $derived(() => {
+    const format = tournament.settings.format
+    if (isSingles) {
+      // Singles: each player becomes a team
+      if (format === 'group-playoff') return Math.max(4, tournament.settings.numGroups * 2)
+      return 2
+    }
+    // Teams: need pairs of 2, so even number; min 2 teams = 4 players
+    if (format === 'group-playoff') return Math.max(4, tournament.settings.numGroups * 2) * 2
+    return 4
+  })
 
   function handleAdd() {
     const name = newName.trim()
@@ -20,7 +30,7 @@
   }
 
   function next() {
-    if (tournament.players.length >= minPlayers) {
+    if (tournament.players.length >= minPlayers()) {
       if (isSingles) {
         // Skip team pairing — auto-create 1-player teams
         createTeamsFromPlayers()
@@ -40,8 +50,8 @@
   <h1 class="text-4xl md:text-5xl text-cornholio-gold mb-2">ADD PLAYERS</h1>
   <p class="text-tp-cream/60 mb-8">
     {tournament.players.length} player{tournament.players.length !== 1 ? 's' : ''} added
-    {#if tournament.players.length < minPlayers}
-      <span class="text-cornholio-red"> (need at least {minPlayers})</span>
+    {#if tournament.players.length < minPlayers()}
+      <span class="text-cornholio-red"> (need at least {minPlayers()})</span>
     {/if}
   </p>
 
@@ -95,7 +105,7 @@
     </button>
     <button
       onclick={next}
-      disabled={tournament.players.length < minPlayers}
+      disabled={tournament.players.length < minPlayers()}
       class="bg-cornholio-gold text-cornholio-dark font-heading text-xl px-8 py-3 rounded-lg
         hover:bg-cornholio-gold-light hover:scale-105 transition-all cursor-pointer shadow-lg
         disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
