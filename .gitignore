@@ -30,3 +30,5 @@ result
 # Playwright/screenshots
 screenshots/
 .playwright-mcp/
+test-results/
+playwright-report/

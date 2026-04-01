@@ -1,8 +1,10 @@
 <script>
-  import { createNewTournament, loadExistingTournament, loadState } from '../stores/tournament.svelte.js'
+  import { createNewTournament, loadExistingTournament, loadState, getState } from '../stores/tournament.svelte.js'
   import { getTournamentIndex, deleteTournament, importTournament, exportTournament, loadTournament } from '../utils/persistence.js'
 
-  let tournaments = $state(getTournamentIndex().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)))
+  const tournament = getState()
+
+  let tournaments = $state([])
   let newName = $state('')
   let fileInput
   let deleteConfirm = $state(null)
@@ -10,6 +12,11 @@
   function refresh() {
     tournaments = getTournamentIndex().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
   }
+
+  // Refresh list whenever we're on home step (tracks state.step reactively)
+  $effect(() => {
+    if (tournament.step === 'home') refresh()
+  })
 
   function handleCreate() {
     const name = newName.trim() || 'New Tournament'

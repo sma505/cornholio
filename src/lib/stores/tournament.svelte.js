@@ -193,6 +193,11 @@ export function loadState(newState) {
 }
 
 export function goHome() {
+  // Force save current state before switching to home
+  if (saveTimeout) clearTimeout(saveTimeout)
+  if (state.id && state.step !== 'home') {
+    saveTournament($state.snapshot(state))
+  }
   state.step = 'home'
 }
 
