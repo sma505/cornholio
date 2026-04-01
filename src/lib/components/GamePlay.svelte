@@ -27,13 +27,33 @@
     }
   }
 
-  // Reassign freed court to next waiting match
-  function reassignCourt(completedMatchCourt) {
-    if (numCourts <= 1) return
-    const waiting = tournament.matches.find(m => !m.completed && !m.court)
-    if (waiting) {
-      waiting.court = completedMatchCourt
+  // Assign courts to bracket matches (first playable round)
+  function assignBracketCourts() {
+    if (numCourts <= 1 || !tournament.bracket) return
+    const allBracketMatches = getAllBracketMatches()
+    let courtIdx = 0
+    for (const match of allBracketMatches) {
+      if (!match.completed && match.team1Id && match.team2Id && !match.court) {
+        match.court = (courtIdx % numCourts) + 1
+        courtIdx++
+      }
     }
+  }
+
+  // Get all bracket matches as a flat array
+  function getAllBracketMatches() {
+    if (!tournament.bracket) return []
+    const matches = []
+    for (const round of tournament.bracket.winners || []) {
+      matches.push(...round.matches)
+    }
+    for (const round of tournament.bracket.losers || []) {
+      matches.push(...round.matches)
+    }
+    if (tournament.bracket.finals?.matches) {
+      matches.push(...tournament.bracket.finals.matches)
+    }
+    return matches
   }
 
   function teamName(id) {
@@ -131,6 +151,7 @@
           .find(m => m.id === match.id)
         if (found) { found.score1 = score1; found.score2 = score2 }
         advanceBracket(tournament.bracket, match.id, result.winnerId, result.loserId)
+        assignBracketCourts() // assign courts to newly playable matches
         setBracket(tournament.bracket)
       } else {
         updateMatch(match.id, score1, score2)
@@ -155,6 +176,7 @@
           .find(m => m.id === match.id)
         if (found) { found.score1 = w1; found.score2 = w2 }
         advanceBracket(tournament.bracket, match.id, result.winnerId, result.loserId)
+        assignBracketCourts()
         setBracket(tournament.bracket)
       } else {
         updateMatch(match.id, w1, w2)
@@ -214,10 +236,16 @@
       setMatches(allMatches)
     }
     if (format === 'single-elim' && !tournament.bracket) {
-      setBracket(generateSingleElimBracket(tournament.teams.map(t => t.id)))
+      const bracket = generateSingleElimBracket(tournament.teams.map(t => t.id))
+      setBracket(bracket)
     }
     if (format === 'double-elim' && !tournament.bracket) {
-      setBracket(generateDoubleElimBracket(tournament.teams.map(t => t.id)))
+      const bracket = generateDoubleElimBracket(tournament.teams.map(t => t.id))
+      setBracket(bracket)
+    }
+    // Assign courts to bracket matches
+    if (tournament.bracket) {
+      assignBracketCourts()
     }
   })
 
@@ -732,7 +760,11 @@
 <!-- Single bracket match card -->
 {#snippet bracketMatchCard(match)}
   <div class="bg-cornholio-navy/50 border border-cornholio-gray-light/30 rounded-lg p-3 w-full max-w-sm
-    {!match.completed && match.team1Id && match.team2Id ? 'border-cornholio-gold/30' : ''}">
+    {!match.completed && match.team1Id && match.team2Id ? 'border-cornholio-gold/30' : ''}
+    {selectedCourt > 0 && match.court && match.court !== selectedCourt && !match.completed ? 'opacity-30' : ''}">
+    {#if numCourts > 1 && match.court && !match.completed}
+      <div class="text-[10px] text-cornholio-gold/50 mb-1">Court {match.court}</div>
+    {/if}
     {#if match.team1Id && match.team2Id}
       {@render matchEntry(match, true)}
     {:else if match.team1Id || match.team2Id}
