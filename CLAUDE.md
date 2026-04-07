@@ -122,7 +122,7 @@ src/
     components/
       Home.svelte                     # Tournament list: create, continue, export, delete
       TournamentSetup.svelte          # Type, format, game mode, courts, rules, tournament name
-      PlayerEntry.svelte              # Add/remove players, format-aware min validation
+      PlayerEntry.svelte              # Add/remove/rename players, inline editing, format-aware min validation
       TeamPairing.svelte              # Drag-drop or shuffle into teams of 2 (teams only)
       GamePlay.svelte                 # Score entry, standings, centered bracket, court tabs
       FrameScorer.svelte              # Frame-by-frame raw points entry with running totals

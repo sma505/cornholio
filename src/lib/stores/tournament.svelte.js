@@ -92,6 +92,13 @@ export function removePlayer(index) {
   scheduleSave()
 }
 
+export function renamePlayer(index, newName) {
+  if (index >= 0 && index < state.players.length) {
+    state.players[index] = newName
+    scheduleSave()
+  }
+}
+
 export function setTeams(teams) {
   state.teams = teams
   scheduleSave()

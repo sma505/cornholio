@@ -1,9 +1,11 @@
 <script>
-  import { getState, addPlayer, removePlayer, setStep, createTeamsFromPlayers } from '../stores/tournament.svelte.js'
+  import { getState, addPlayer, removePlayer, renamePlayer, setStep, createTeamsFromPlayers } from '../stores/tournament.svelte.js'
   import { t } from '../i18n/index.svelte.js'
 
   const tournament = getState()
   let newName = $state('')
+  let editingIndex = $state(-1)
+  let editingName = $state('')
 
   const isSingles = $derived(tournament.settings.tournamentType === 'singles')
   const minPlayers = $derived(() => {
@@ -28,6 +30,34 @@
 
   function handleKeydown(e) {
     if (e.key === 'Enter') handleAdd()
+  }
+
+  function startEdit(index) {
+    editingIndex = index
+    editingName = tournament.players[index]
+  }
+
+  function commitEdit() {
+    const name = editingName.trim()
+    if (name && editingIndex >= 0) {
+      // Allow same name (no-op) or a name not already taken by another player
+      const duplicate = tournament.players.some((p, i) => i !== editingIndex && p === name)
+      if (!duplicate) {
+        renamePlayer(editingIndex, name)
+      }
+    }
+    editingIndex = -1
+    editingName = ''
+  }
+
+  function cancelEdit() {
+    editingIndex = -1
+    editingName = ''
+  }
+
+  function handleEditKeydown(e) {
+    if (e.key === 'Enter') commitEdit()
+    if (e.key === 'Escape') cancelEdit()
   }
 
   function next() {
@@ -80,15 +110,34 @@
   <div class="w-full space-y-2 mb-8 max-h-96 overflow-y-auto">
     {#each tournament.players as player, i}
       <div class="flex items-center justify-between bg-cornholio-navy/50 border border-cornholio-gray-light/50
-        rounded-lg px-4 py-3 group">
-        <span class="text-tp-white">
-          <span class="text-cornholio-gold/50 text-sm mr-2">{i + 1}.</span>
-          {player}
-        </span>
+        rounded-lg px-4 py-3">
+        {#if editingIndex === i}
+          <div class="flex items-center flex-1 mr-2">
+            <span class="text-cornholio-gold/50 text-sm mr-2">{i + 1}.</span>
+            <input
+              type="text"
+              bind:value={editingName}
+              onkeydown={handleEditKeydown}
+              onblur={commitEdit}
+              autofocus
+              class="flex-1 bg-cornholio-dark border border-cornholio-gold rounded px-2 py-1
+                text-tp-white focus:outline-none"
+            />
+          </div>
+        {:else}
+          <button
+            onclick={() => startEdit(i)}
+            class="text-tp-white text-left flex-1 bg-transparent border-none cursor-pointer
+              hover:text-cornholio-gold transition-colors p-0"
+          >
+            <span class="text-cornholio-gold/50 text-sm mr-2">{i + 1}.</span>
+            {player}
+          </button>
+        {/if}
         <button
           onclick={() => removePlayer(i)}
           class="text-cornholio-red/50 hover:text-cornholio-red text-xl cursor-pointer
-            bg-transparent border-none opacity-0 group-hover:opacity-100 transition-opacity"
+            bg-transparent border-none transition-opacity ml-2"
         >
           ✕
         </button>
