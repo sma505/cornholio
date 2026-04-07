@@ -15,7 +15,7 @@ A single-page webapp for creating and running cornhole tournaments with Beavis &
 ## Commands
 - `npm run dev` — dev server (base path `/cornholio/`)
 - `npm run build` — production build to `dist/`
-- `npm run test:run` — run unit tests (178 tests, <1s)
+- `npm run test:run` — run unit tests (331 tests, <1s)
 - `npm run test:e2e` — run E2E tests (28 tests, ~30s)
 - `npm run test` — vitest in watch mode
 
@@ -49,6 +49,8 @@ Navigation:
 4. **Double Elimination** — winners/losers brackets + grand finals (left-to-right layout)
 
 Bracket layout: all bracket formats use left-to-right flow on desktop (Round 1 → ... → Final), vertical stack on mobile (<768px). Bye matches show as "Player — bye".
+
+Double-elim bye resolution: Non-power-of-2 team counts produce byes in the losers bracket. `resolveByeAdvances()` auto-completes LB matches that have received all their feeders but only have 0-1 teams, cascading until stable. Called after bracket generation and after every `advanceBracket()` call.
 
 ### Game Modes
 - **Standard**: Play until one team reaches `pointsToWin` (default 21). Optional skunk rule. Best-of series configurable per stage (Bo1/3/5).
@@ -115,7 +117,7 @@ src/
     utils/
       scoring.js                      # Score validation, frame calculations, draw detection
       roundrobin.js                   # Round-robin scheduling, groups, standings (with draws)
-      bracket.js                      # Single/double elimination brackets
+      bracket.js                      # Single/double elimination brackets, bye resolution, deadlock detection
       persistence.js                  # Multi-tournament localStorage, JSON export/import
     components/
       Home.svelte                     # Tournament list: create, continue, export, delete
@@ -129,8 +131,9 @@ src/
       ui/HelpModal.svelte             # Tabbed help: scoring, formats, game modes, settings
 tests/
   scoring.test.js                     # 38 unit tests
-  roundrobin.test.js                  # 23 unit tests
-  bracket.test.js                     # 28 unit tests
+  roundrobin.test.js                  # 73 unit tests (RR, groups, standings, group+playoff simulation)
+  bracket.test.js                     # 94 unit tests (SE/DE generation, advancement, deadlock simulation 2-16 teams)
+  singles-flow.test.js                # 61 unit tests (all 4 formats × singles player counts 2-16)
 e2e/
   helpers.js                          # Shared E2E test utilities
   home.spec.js                        # Home screen tests (5)
@@ -153,7 +156,9 @@ e2e/
 - Tournament logic (scheduling, scoring, brackets) lives in pure JS utility files with no framework dependencies
 - `font-heading` class for Bangers font headings
 - `getMatchResult()` returns `{ isDraw: true }` when scores are equal — always check before accessing `winnerId`
-- `advanceBracket()` takes `(bracket, matchId, winnerId, loserId)` — NOT scores
+- `advanceBracket()` takes `(bracket, matchId, winnerId, loserId)` — NOT scores. Auto-resolves LB byes after each advancement.
+- Double-elim WB matches have `loserNextMatchId` wiring losers to specific LB matches — never use index-based mapping
+- `getPlayableMatches(bracket)` returns matches ready to play; `isBracketDeadlocked(bracket)` detects stuck states
 - Player validation is format-aware: PlayerEntry enforces min players based on format (e.g. group-playoff needs `numGroups * 2` teams, teams mode doubles that for player pairs)
 - Bracket round names: auto-generated as "Quarterfinals", "Semifinals", "Final" (counting back from last round) via `roundName(ri, total)` helper in both GamePlay and Results
 - Quick mode forces Bo1 — `getBestOf()` returns 1 when `gameMode === 'quick'`
@@ -166,7 +171,7 @@ e2e/
 - When adding new strings, add keys to both `en.js` and `de.js`
 
 ## Testing
-- **Unit tests** (Vitest): `npm run test:run` — 178 tests covering scoring, round-robin, bracket logic
+- **Unit tests** (Vitest): `npm run test:run` — 331 tests covering scoring, round-robin, bracket logic, full-tournament simulations (2-16 teams/players × all formats × singles+teams)
 - **E2E tests** (Playwright Test): `npm run test:e2e` — 28 tests covering all tournament flows
 - **CI**: GitHub Actions deploys on push to main (tests not yet in CI — add `.github/workflows/test.yml`)
 

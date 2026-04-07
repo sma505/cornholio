@@ -4,6 +4,8 @@ import {
   generateDoubleElimBracket,
   advanceBracket,
   getBracketWinner,
+  getPlayableMatches,
+  isBracketDeadlocked,
 } from '../src/lib/utils/bracket.js';
 
 // ---------------------------------------------------------------------------
@@ -415,5 +417,259 @@ describe('getBracketWinner', () => {
   it('empty bracket returns null', () => {
     expect(getBracketWinner({ winners: [] })).toBeNull();
     expect(getBracketWinner({ winners: [], losers: [], finals: { matches: [] } })).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// State-machine helpers
+// ---------------------------------------------------------------------------
+
+describe('getPlayableMatches', () => {
+  it('returns matches with both teams that are not completed', () => {
+    const bracket = generateSingleElimBracket(['a', 'b', 'c', 'd']);
+    const playable = getPlayableMatches(bracket);
+
+    // Round 1 has 2 real matches
+    expect(playable).toHaveLength(2);
+    playable.forEach((m) => {
+      expect(m.team1Id).not.toBeNull();
+      expect(m.team2Id).not.toBeNull();
+      expect(m.completed).toBe(false);
+    });
+  });
+
+  it('excludes bye matches', () => {
+    const bracket = generateSingleElimBracket(['a', 'b', 'c']);
+    const playable = getPlayableMatches(bracket);
+
+    // Only 1 real match in R1 (other is bye), R2 has 1 team from bye
+    expect(playable).toHaveLength(1);
+  });
+
+  it('returns empty when all matches completed', () => {
+    const bracket = generateSingleElimBracket(['a', 'b']);
+    advanceBracket(bracket, bracket.winners[0].matches[0].id, 'a', 'b');
+    expect(getPlayableMatches(bracket)).toHaveLength(0);
+  });
+});
+
+describe('isBracketDeadlocked', () => {
+  it('returns false for fresh bracket with playable matches', () => {
+    const bracket = generateSingleElimBracket(['a', 'b', 'c', 'd']);
+    expect(isBracketDeadlocked(bracket)).toBe(false);
+  });
+
+  it('returns false for completed bracket', () => {
+    const bracket = generateSingleElimBracket(['a', 'b']);
+    const match = bracket.winners[0].matches[0];
+    match.score1 = 21;
+    match.score2 = 10;
+    advanceBracket(bracket, match.id, 'a', 'b');
+    expect(isBracketDeadlocked(bracket)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// loserNextMatchId wiring
+// ---------------------------------------------------------------------------
+
+describe('double elim loserNextMatchId wiring', () => {
+  it('4 teams: all WB matches have loserNextMatchId', () => {
+    const bracket = generateDoubleElimBracket(['a', 'b', 'c', 'd']);
+
+    for (const round of bracket.winners) {
+      for (const match of round.matches) {
+        expect(match.loserNextMatchId).toBeDefined();
+        // Should point to a real LB match
+        const target = allMatches(bracket).find((m) => m.id === match.loserNextMatchId);
+        expect(target).toBeDefined();
+      }
+    }
+  });
+
+  it('WB R0 losers map to LB R0 matches (minor round)', () => {
+    const bracket = generateDoubleElimBracket(['a', 'b', 'c', 'd']);
+    const wbR0 = bracket.winners[0].matches;
+    const lbR0 = bracket.losers[0].matches;
+
+    // Both WB R0 matches should point to the same LB R0 match (paired)
+    expect(wbR0[0].loserNextMatchId).toBe(lbR0[0].id);
+    expect(wbR0[1].loserNextMatchId).toBe(lbR0[0].id);
+  });
+
+  it('WB R1 losers map to LB drop round', () => {
+    const bracket = generateDoubleElimBracket(['a', 'b', 'c', 'd']);
+    const wbR1 = bracket.winners[1].matches;
+    const lbR1 = bracket.losers[1].matches;
+
+    expect(wbR1[0].loserNextMatchId).toBe(lbR1[0].id);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Full tournament simulations — deadlock-free guarantee
+// ---------------------------------------------------------------------------
+
+/**
+ * Simulate an entire bracket tournament.  The team with the lower index
+ * (higher seed) always wins.  Returns the completed bracket.
+ */
+function simulateBracket(bracket) {
+  const MAX_ITERATIONS = 200;
+  let iterations = 0;
+
+  while (iterations++ < MAX_ITERATIONS) {
+    const playable = getPlayableMatches(bracket);
+    if (playable.length === 0) break;
+
+    const match = playable[0];
+    match.score1 = 21;
+    match.score2 = 10;
+    advanceBracket(bracket, match.id, match.team1Id, match.team2Id);
+  }
+
+  return bracket;
+}
+
+function teamIds(n) {
+  return Array.from({ length: n }, (_, i) => `t${i + 1}`);
+}
+
+describe('single elimination: full simulation (2–16 teams)', () => {
+  for (let n = 2; n <= 16; n++) {
+    it(`${n} teams: completes without deadlock`, () => {
+      const bracket = generateSingleElimBracket(teamIds(n));
+      simulateBracket(bracket);
+
+      expect(isBracketDeadlocked(bracket)).toBe(false);
+      expect(getBracketWinner(bracket)).not.toBeNull();
+      expect(getBracketWinner(bracket)).toBe('t1'); // top seed always wins
+    });
+  }
+});
+
+describe('double elimination: full simulation (2–16 teams)', () => {
+  for (let n = 2; n <= 16; n++) {
+    it(`${n} teams: completes without deadlock`, () => {
+      const bracket = generateDoubleElimBracket(teamIds(n));
+      simulateBracket(bracket);
+
+      expect(isBracketDeadlocked(bracket)).toBe(false);
+      expect(getBracketWinner(bracket)).not.toBeNull();
+    });
+  }
+});
+
+describe('double elimination: 3-team regression (original deadlock)', () => {
+  it('3 teams: LB R0 auto-advances as bye after single WB R0 loser placed', () => {
+    const bracket = generateDoubleElimBracket(['A', 'B', 'C']);
+
+    // WB R0 has 1 bye (A advances) and 1 real match (B vs C)
+    const wbR0 = bracket.winners[0].matches;
+    const realMatch = wbR0.find((m) => m.team1Id !== null && m.team2Id !== null);
+    expect(realMatch).toBeDefined();
+
+    // Play B vs C → B wins, C goes to LB
+    realMatch.score1 = 21;
+    realMatch.score2 = 10;
+    advanceBracket(bracket, realMatch.id, realMatch.team1Id, realMatch.team2Id);
+
+    // LB R0 should auto-advance C (bye — no second team coming)
+    const lbR0Match = bracket.losers[0].matches[0];
+    expect(lbR0Match.completed).toBe(true);
+    expect(lbR0Match.team1Id || lbR0Match.team2Id).toBe('C');
+
+    // WB R1 (A vs B) should be playable
+    expect(getPlayableMatches(bracket).length).toBeGreaterThanOrEqual(1);
+
+    // Should NOT be deadlocked
+    expect(isBracketDeadlocked(bracket)).toBe(false);
+  });
+
+  it('3 teams: full tournament completes through grand finals', () => {
+    const bracket = generateDoubleElimBracket(['A', 'B', 'C']);
+    simulateBracket(bracket);
+
+    expect(isBracketDeadlocked(bracket)).toBe(false);
+    expect(getBracketWinner(bracket)).not.toBeNull();
+
+    // Grand finals should be completed
+    expect(bracket.finals.matches[0].completed).toBe(true);
+  });
+});
+
+describe('double elimination: 5-team regression (cascading byes)', () => {
+  it('5 teams: WB R0 has 3 byes, LB R0 handles cascading auto-advances', () => {
+    const bracket = generateDoubleElimBracket(teamIds(5));
+
+    // WB R0 should have 3 byes and 1 real match
+    const wbR0 = bracket.winners[0].matches;
+    const byes = wbR0.filter((m) => m.team1Id === null || m.team2Id === null);
+    const real = wbR0.filter((m) => m.team1Id !== null && m.team2Id !== null);
+    expect(byes).toHaveLength(3);
+    expect(real).toHaveLength(1);
+
+    // Should not be deadlocked at any point during simulation
+    simulateBracket(bracket);
+    expect(isBracketDeadlocked(bracket)).toBe(false);
+    expect(getBracketWinner(bracket)).not.toBeNull();
+  });
+});
+
+describe('double elimination: lower seed can win via losers bracket', () => {
+  it('4 teams: team2 wins through losers bracket', () => {
+    const bracket = generateDoubleElimBracket(['A', 'B', 'C', 'D']);
+    const wbR0 = bracket.winners[0].matches;
+
+    // R0: A beats D, C beats B → B goes to LB
+    wbR0[0].score1 = 21;
+    wbR0[0].score2 = 10;
+    advanceBracket(bracket, wbR0[0].id, 'A', 'D');
+
+    wbR0[1].score1 = 10;
+    wbR0[1].score2 = 21;
+    advanceBracket(bracket, wbR0[1].id, 'C', 'B');
+
+    // WB Final: A vs C
+    const wbFinal = bracket.winners[1].matches[0];
+    expect(wbFinal.team1Id).toBe('A');
+    expect(wbFinal.team2Id).toBe('C');
+
+    // C beats A → A drops to LB
+    wbFinal.score1 = 10;
+    wbFinal.score2 = 21;
+    advanceBracket(bracket, wbFinal.id, 'C', 'A');
+
+    // LB R0: D vs B
+    const lbR0 = bracket.losers[0].matches[0];
+    expect(lbR0.team1Id).toBe('D');
+    expect(lbR0.team2Id).toBe('B');
+
+    // B beats D
+    lbR0.score1 = 10;
+    lbR0.score2 = 21;
+    advanceBracket(bracket, lbR0.id, 'B', 'D');
+
+    // LB R1: B vs A (drop round)
+    const lbR1 = bracket.losers[1].matches[0];
+    expect(lbR1.team1Id === 'B' || lbR1.team2Id === 'B').toBe(true);
+    expect(lbR1.team1Id === 'A' || lbR1.team2Id === 'A').toBe(true);
+
+    // B beats A → B goes to grand finals
+    lbR1.score1 = lbR1.team1Id === 'B' ? 21 : 10;
+    lbR1.score2 = lbR1.team2Id === 'B' ? 21 : 10;
+    advanceBracket(bracket, lbR1.id, 'B', 'A');
+
+    // Grand finals: C vs B
+    const gf = bracket.finals.matches[0];
+    expect(gf.team1Id === 'C' || gf.team2Id === 'C').toBe(true);
+    expect(gf.team1Id === 'B' || gf.team2Id === 'B').toBe(true);
+
+    // B wins grand finals
+    gf.score1 = gf.team1Id === 'B' ? 21 : 10;
+    gf.score2 = gf.team2Id === 'B' ? 21 : 10;
+    advanceBracket(bracket, gf.id, 'B', 'C');
+
+    expect(getBracketWinner(bracket)).toBe('B');
   });
 });

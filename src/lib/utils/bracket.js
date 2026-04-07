@@ -177,10 +177,13 @@ function getMatchLoser(match) {
  * Structure:
  *   - Winners bracket: same as single elim.
  *   - Losers bracket: losers from winners round N drop into the losers bracket.
- *     Rounds alternate between "drop-down" rounds (where teams from the
- *     winners bracket enter) and "play-each-other" rounds (remaining losers
- *     bracket teams face off).
+ *     Rounds alternate between "minor" rounds (LB teams play each other) and
+ *     "drop" rounds (WB losers drop down to face LB survivors).
  *   - Grand finals: winners bracket champion vs losers bracket champion.
+ *
+ * Each WB match gets a `loserNextMatchId` pointing to its specific LB target.
+ * After generation, bye situations (from non-power-of-2 team counts) are
+ * auto-resolved so the bracket never deadlocks.
  *
  * @param {string[]} teamIds
  * @returns {{ winners: object[], losers: object[], finals: { matches: object[] } }}
@@ -195,51 +198,38 @@ export function generateDoubleElimBracket(teamIds) {
   const { winners } = generateSingleElimBracket(teamIds);
 
   // --- Losers bracket ---
-  // For each winners round (except the last, which is the WB final), losers
-  // drop down.  The losers bracket has roughly 2*(winnersRounds-1) rounds.
-  //
-  // Pattern per winners round R (1-indexed):
-  //   Losers "drop" round  — incoming WB losers face existing LB survivors.
-  //   Losers "minor" round — remaining LB teams play each other to halve the
-  //                          field before the next drop.
-  //
-  // The first drop round is special: WB round-1 losers play each other first
-  // (there are no existing LB survivors), then the winners of that face WB
-  // round-2 losers, and so on.
   const winnersRounds = winners.length;
   const losers = [];
 
-  // We'll build the losers bracket structure with placeholder matches.
-  // Exact wiring depends on bracket size; for a clean approach we create the
-  // correct number of matches per losers round.
-
-  // Number of matches feeding from WB round r (0-indexed): winners[r].matches.length
-  // WB round 0 losers count = winners[0].matches.length (first round losers)
-
-  // LB round 1 (minor): WB-R1 losers play each other.
+  // LB round 0 (minor): WB-R0 losers play each other.
   let lbMatchCount = Math.floor(winners[0].matches.length / 2);
   if (lbMatchCount > 0) {
-    losers.push({
-      round: 1,
-      matches: Array.from({ length: lbMatchCount }, () => createMatch(null, null)),
-    });
+    const lbR0Matches = Array.from({ length: lbMatchCount }, () => createMatch(null, null));
+    losers.push({ round: 1, matches: lbR0Matches });
+
+    // Wire WB R0 losers → LB R0 (two WB losers per LB match)
+    for (let i = 0; i < winners[0].matches.length; i++) {
+      const lbIdx = Math.floor(i / 2);
+      if (lbIdx < lbR0Matches.length) {
+        winners[0].matches[i].loserNextMatchId = lbR0Matches[lbIdx].id;
+      }
+    }
   }
 
-  // For subsequent WB rounds, we get drop + minor rounds.
+  // For subsequent WB rounds: drop round + optional minor round.
   for (let wbr = 1; wbr < winnersRounds; wbr++) {
-    // Drop round: LB survivors vs WB-round-(wbr+1) losers.
-    // The count equals the number of WB matches in that round (since each
-    // produces one loser).  This should also equal the surviving LB teams from
-    // the previous LB round.
     const dropCount = winners[wbr].matches.length;
-    losers.push({
-      round: losers.length + 1,
-      matches: Array.from({ length: dropCount }, () => createMatch(null, null)),
-    });
+    const dropMatches = Array.from({ length: dropCount }, () => createMatch(null, null));
+    losers.push({ round: losers.length + 1, matches: dropMatches });
+
+    // Wire WB Rwbr losers → this drop round
+    for (let i = 0; i < winners[wbr].matches.length; i++) {
+      if (i < dropMatches.length) {
+        winners[wbr].matches[i].loserNextMatchId = dropMatches[i].id;
+      }
+    }
 
     // Minor round: remaining LB teams play each other (halve the field).
-    // Only needed if there's more than 1 team left after the drop round and
-    // we haven't reached the LB final yet.
     if (dropCount > 1) {
       const minorCount = Math.floor(dropCount / 2);
       losers.push({
@@ -275,11 +265,13 @@ export function generateDoubleElimBracket(teamIds) {
     lbFinal.nextMatchId = grandFinal.id;
   }
 
-  return {
-    winners,
-    losers,
-    finals: { matches: [grandFinal] },
-  };
+  const bracket = { winners, losers, finals: { matches: [grandFinal] } };
+
+  // Resolve bye-induced auto-advances (e.g. 3-team bracket where LB R0 only
+  // gets 1 real loser because WB R0 had a bye).
+  resolveByeAdvances(bracket);
+
+  return bracket;
 }
 
 // ---------------------------------------------------------------------------
@@ -334,7 +326,9 @@ function placeTeamInMatch(bracket, matchId, teamId) {
  *
  * Marks the match as completed, places the winner in their next match.  For
  * double-elimination brackets, also places the loser in the appropriate
- * losers bracket match.
+ * losers bracket match via the explicit `loserNextMatchId` wiring set during
+ * generation.  After placement, auto-resolves any bye matches in the losers
+ * bracket that now have all their feeders completed.
  *
  * Mutates `bracket` in place and returns it.
  *
@@ -348,7 +342,7 @@ export function advanceBracket(bracket, matchId, winnerId, loserId) {
   const found = findMatch(bracket, matchId);
   if (!found) return bracket;
 
-  const { match, section, roundIdx } = found;
+  const { match, section } = found;
   match.completed = true;
 
   // Place winner in next match.
@@ -356,35 +350,133 @@ export function advanceBracket(bracket, matchId, winnerId, loserId) {
     placeTeamInMatch(bracket, match.nextMatchId, winnerId);
   }
 
-  // Double-elim: if the match is in the winners bracket and there is a
-  // losers bracket, send the loser to the corresponding losers bracket match.
-  if (section === 'winners' && bracket.losers && bracket.losers.length > 0 && loserId) {
-    // Convention: WB round R losers go to LB drop round.  The first WB round
-    // (index 0) losers feed LB round index 0.  WB round 1 losers feed LB
-    // round index 1, etc.  The exact target match within that round is based
-    // on the match's position.
-    // We map WB round 0 -> LB round 0, WB round 1 -> LB round 1 (drop), ...
-    // In our structure, LB round 0 is always the first minor round for WB-R1
-    // losers.  So WB round 0 -> LB round 0 (minor), WB round 1 -> LB round 1
-    // (drop), etc.
-    const lbRoundIdx = Math.min(roundIdx, bracket.losers.length - 1);
-    const lbRound = bracket.losers[lbRoundIdx];
-    if (lbRound) {
-      // Find the first match in that LB round with an open slot.
-      const openMatch = lbRound.matches.find(
-        (m) => m.team1Id === null || m.team2Id === null
-      );
-      if (openMatch) {
-        if (openMatch.team1Id === null) {
-          openMatch.team1Id = loserId;
-        } else {
-          openMatch.team2Id = loserId;
-        }
-      }
-    }
+  // Double-elim: send the loser to their explicit LB target match.
+  if (section === 'winners' && loserId && match.loserNextMatchId) {
+    placeTeamInMatch(bracket, match.loserNextMatchId, loserId);
   }
 
+  // Auto-resolve any LB byes that are now unblocked.
+  resolveByeAdvances(bracket);
+
   return bracket;
+}
+
+// ---------------------------------------------------------------------------
+// Bye resolution
+// ---------------------------------------------------------------------------
+
+/**
+ * Collect every match in the bracket (winners, losers, finals).
+ */
+function collectAllMatches(bracket) {
+  const result = [];
+  for (const section of ['winners', 'losers']) {
+    const rounds = bracket[section];
+    if (!rounds) continue;
+    for (const round of rounds) {
+      result.push(...round.matches);
+    }
+  }
+  if (bracket.finals?.matches) {
+    result.push(...bracket.finals.matches);
+  }
+  return result;
+}
+
+/**
+ * After any advancement (or initial generation), scan the losers bracket and
+ * finals for matches that have received all their expected teams but only have
+ * one (or zero) — i.e. bye situations caused by non-power-of-2 team counts.
+ *
+ * A match is a bye when:
+ *   - It has 0 or 1 real team, AND
+ *   - No uncompleted match feeds into it (via nextMatchId or loserNextMatchId)
+ *
+ * Bye matches are auto-completed and their sole team (if any) is advanced.
+ * This repeats until no more byes can be resolved (handles cascading byes).
+ */
+function resolveByeAdvances(bracket) {
+  if (!bracket.losers && !bracket.finals) return;
+
+  const all = collectAllMatches(bracket);
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+
+    // Check losers bracket and finals for auto-advanceable matches
+    const sections = [];
+    if (bracket.losers) {
+      for (const round of bracket.losers) sections.push(...round.matches);
+    }
+    if (bracket.finals?.matches) sections.push(...bracket.finals.matches);
+
+    for (const match of sections) {
+      if (match.completed) continue;
+
+      const hasTeam1 = match.team1Id !== null;
+      const hasTeam2 = match.team2Id !== null;
+
+      // Already has both teams — ready to play, not a bye
+      if (hasTeam1 && hasTeam2) continue;
+
+      // Check if any uncompleted match still feeds into this one
+      const hasPendingFeeder = all.some(
+        (m) =>
+          !m.completed &&
+          m.id !== match.id &&
+          (m.nextMatchId === match.id || m.loserNextMatchId === match.id)
+      );
+
+      if (hasPendingFeeder) continue;
+
+      // No more teams can arrive. Auto-complete.
+      match.completed = true;
+      const winner = match.team1Id || match.team2Id;
+
+      if (winner) {
+        // Single-team bye: advance the team
+        match.score1 = hasTeam1 ? 0 : null;
+        match.score2 = hasTeam2 ? 0 : null;
+
+        if (match.nextMatchId) {
+          placeTeamInMatch(bracket, match.nextMatchId, winner);
+        }
+      }
+      // Zero-team match: just mark completed, nothing to advance
+
+      changed = true;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// State-machine query helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Return all matches that are ready to be played (not completed, both teams
+ * present).  Works for any bracket type.
+ *
+ * @param {object} bracket
+ * @returns {object[]}
+ */
+export function getPlayableMatches(bracket) {
+  return collectAllMatches(bracket).filter(
+    (m) => !m.completed && m.team1Id !== null && m.team2Id !== null
+  );
+}
+
+/**
+ * True when the bracket has no playable matches but no winner yet — a state
+ * that should never occur with correct bracket logic.
+ *
+ * @param {object} bracket
+ * @returns {boolean}
+ */
+export function isBracketDeadlocked(bracket) {
+  if (getBracketWinner(bracket) !== null) return false;
+  return getPlayableMatches(bracket).length === 0;
 }
 
 // ---------------------------------------------------------------------------
