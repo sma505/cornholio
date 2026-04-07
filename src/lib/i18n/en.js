@@ -9,6 +9,7 @@ export const en = {
   'common.score': 'Score',
   'common.draw': 'DRAW',
   'common.bye': 'bye',
+  'common.save': 'Save',
 
   // Formats
   'format.roundRobin': 'Round Robin',
@@ -192,6 +193,8 @@ export const en = {
   'frames.raw': 'Raw',
   'frames.net': 'Net',
   'frames.total': 'Total',
+  'frames.undoLast': 'Undo Last Frame',
+  'frames.confirmResult': 'Confirm Result',
 
   // Results
   'results.championTitle': '\uD83C\uDFC6 THE GREAT CORNHOLIO CHAMPION! \uD83C\uDFC6',

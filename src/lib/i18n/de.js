@@ -9,6 +9,7 @@ export const de = {
   'common.score': 'Punkte',
   'common.draw': 'UNENTSCHIEDEN',
   'common.bye': 'Freilos',
+  'common.save': 'Speichern',
 
   // Formats
   'format.roundRobin': 'Jeder gegen Jeden',
@@ -192,6 +193,8 @@ export const de = {
   'frames.raw': 'Roh',
   'frames.net': 'Netto',
   'frames.total': 'Gesamt',
+  'frames.undoLast': 'Letztes Frame r\u00FCckg\u00E4ngig',
+  'frames.confirmResult': 'Ergebnis best\u00E4tigen',
 
   // Results
   'results.championTitle': '\uD83C\uDFC6 DER GRO\u00DFE CORNHOLIO-CHAMPION! \uD83C\uDFC6',

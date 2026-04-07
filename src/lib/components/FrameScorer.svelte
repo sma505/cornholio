@@ -12,6 +12,12 @@
   let input2 = $state('')
   let frameError = $state(null)
   let gameFinished = $state(false)
+  let gameConfirmed = $state(false)
+
+  // Inline edit state
+  let editingIndex = $state(null)
+  let editInput1 = $state('')
+  let editInput2 = $state('')
 
   let totals = $derived(calculateRunningTotal(frames))
 
@@ -36,9 +42,65 @@
 
     if (isGameComplete(frames, settings)) {
       gameFinished = true
-      const final = calculateRunningTotal(frames)
-      onGameComplete?.(final.score1, final.score2, [...frames])
+      // Don't call onGameComplete yet — user must confirm
     }
+  }
+
+  function undoLastFrame() {
+    if (frames.length === 0) return
+    frames.pop()
+    gameFinished = isGameComplete(frames, settings)
+    editingIndex = null
+    frameError = null
+  }
+
+  function confirmGameResult() {
+    const final = calculateRunningTotal(frames)
+    onGameComplete?.(final.score1, final.score2, [...frames])
+    gameConfirmed = true
+  }
+
+  function startEdit(index) {
+    editingIndex = index
+    editInput1 = String(frames[index].team1Pts)
+    editInput2 = String(frames[index].team2Pts)
+    frameError = null
+  }
+
+  function saveEdit() {
+    const team1Pts = parseInt(editInput1) || 0
+    const team2Pts = parseInt(editInput2) || 0
+    const { valid, errors } = validateFrame({ team1Pts, team2Pts })
+    if (!valid) {
+      frameError = errors.join('. ')
+      return
+    }
+    frameError = null
+    frames[editingIndex] = { team1Pts, team2Pts }
+
+    // In standard mode, if editing an earlier frame now triggers completion,
+    // trim frames after that point
+    if (settings.gameMode !== 'quick') {
+      for (let i = 0; i <= editingIndex; i++) {
+        if (isGameComplete(frames.slice(0, i + 1), settings)) {
+          frames.length = i + 1
+          break
+        }
+      }
+    }
+
+    editingIndex = null
+    gameFinished = isGameComplete(frames, settings)
+  }
+
+  function cancelEdit() {
+    editingIndex = null
+    frameError = null
+  }
+
+  function handleEditKeydown(e) {
+    if (e.key === 'Enter') saveEdit()
+    if (e.key === 'Escape') cancelEdit()
   }
 
   function handleKeydown(e) {
@@ -148,6 +210,45 @@
     {#if frameError}
       <div class="text-cornholio-red text-xs mt-2 text-center">{frameError}</div>
     {/if}
+
+    {#if frames.length > 0}
+      <div class="text-center mt-1">
+        <button
+          onclick={undoLastFrame}
+          class="text-tp-cream/40 text-xs hover:text-cornholio-red transition-colors cursor-pointer
+            bg-transparent border-none"
+        >
+          {t('frames.undoLast')}
+        </button>
+      </div>
+    {/if}
+  {:else if !gameConfirmed}
+    <!-- Game complete — confirmation gate -->
+    <div class="text-center py-4 bg-cornholio-gold/10 rounded-lg space-y-3">
+      <span class="text-cornholio-gold font-heading text-lg">{t('play.gameComplete')}</span>
+      <div class="text-tp-cream text-sm">{totals.score1} – {totals.score2}</div>
+      <div class="flex justify-center gap-3">
+        <button
+          onclick={undoLastFrame}
+          class="text-tp-cream/60 text-sm px-4 py-2 rounded-lg border border-tp-cream/20
+            hover:border-cornholio-red hover:text-cornholio-red transition-colors cursor-pointer
+            bg-transparent"
+        >
+          {t('frames.undoLast')}
+        </button>
+        <button
+          onclick={confirmGameResult}
+          class="bg-cornholio-gold text-cornholio-dark font-heading px-6 py-2 rounded-lg
+            hover:bg-cornholio-gold-light transition-colors cursor-pointer text-sm"
+        >
+          {t('frames.confirmResult')}
+        </button>
+      </div>
+    </div>
+
+    {#if frameError}
+      <div class="text-cornholio-red text-xs mt-2 text-center">{frameError}</div>
+    {/if}
   {:else}
     <div class="text-center py-3 bg-cornholio-gold/10 rounded-lg">
       <span class="text-cornholio-gold font-heading text-lg">{t('play.gameComplete')}</span>
@@ -169,23 +270,58 @@
         </thead>
         <tbody>
           {#each frames as frame, i}
-            {@const result = calculateFrameResult(frame)}
-            {@const running = calculateRunningTotal(frames.slice(0, i + 1))}
-            <tr class="border-b border-cornholio-gray-light/5
-              {i === frames.length - 1 ? 'bg-cornholio-navy/30' : ''}">
-              <td class="py-1 px-2 text-tp-cream/30">{t('play.frame', { n: i + 1 })}</td>
-              <td class="py-1 px-2 text-center text-tp-cream/60">{frame.team1Pts} : {frame.team2Pts}</td>
-              <td class="py-1 px-2 text-center">
-                {#if result.net > 0}
-                  <span class="text-cornholio-gold font-bold">
-                    +{result.net} {result.scoringTeam === 1 ? team1Name : team2Name}
-                  </span>
-                {:else}
-                  <span class="text-tp-cream/25">–</span>
-                {/if}
-              </td>
-              <td class="py-1 px-2 text-right text-tp-white font-bold tabular-nums">{running.score1} – {running.score2}</td>
-            </tr>
+            {#if editingIndex === i}
+              <tr class="border-b border-cornholio-gray-light/5 bg-cornholio-navy/40">
+                <td class="py-1 px-2 text-tp-cream/30">{t('play.frame', { n: i + 1 })}</td>
+                <td class="py-1 px-2 text-center">
+                  <input type="number" min="0" max="12"
+                    bind:value={editInput1}
+                    onkeydown={handleEditKeydown}
+                    class="w-10 bg-cornholio-dark border border-cornholio-gold/50 rounded px-1
+                      text-cornholio-gold text-center text-xs focus:outline-none focus:border-cornholio-gold"
+                  />
+                  <span class="text-tp-cream/30 mx-0.5">:</span>
+                  <input type="number" min="0" max="12"
+                    bind:value={editInput2}
+                    onkeydown={handleEditKeydown}
+                    class="w-10 bg-cornholio-dark border border-cornholio-gold/50 rounded px-1
+                      text-cornholio-gold text-center text-xs focus:outline-none focus:border-cornholio-gold"
+                  />
+                </td>
+                <td colspan="2" class="py-1 px-2 text-right space-x-2">
+                  <button onclick={saveEdit}
+                    class="text-cornholio-gold text-xs cursor-pointer bg-transparent border-none hover:text-cornholio-gold-light">
+                    {t('common.save')}
+                  </button>
+                  <button onclick={cancelEdit}
+                    class="text-tp-cream/40 text-xs cursor-pointer bg-transparent border-none hover:text-tp-cream">
+                    {t('common.cancel')}
+                  </button>
+                </td>
+              </tr>
+            {:else}
+              {@const result = calculateFrameResult(frame)}
+              {@const running = calculateRunningTotal(frames.slice(0, i + 1))}
+              <tr
+                class="border-b border-cornholio-gray-light/5
+                  {i === frames.length - 1 ? 'bg-cornholio-navy/30' : ''}
+                  {!gameConfirmed ? 'cursor-pointer hover:bg-cornholio-navy/20' : ''}"
+                onclick={() => { if (!gameConfirmed) startEdit(i) }}
+              >
+                <td class="py-1 px-2 text-tp-cream/30">{t('play.frame', { n: i + 1 })}</td>
+                <td class="py-1 px-2 text-center text-tp-cream/60">{frame.team1Pts} : {frame.team2Pts}</td>
+                <td class="py-1 px-2 text-center">
+                  {#if result.net > 0}
+                    <span class="text-cornholio-gold font-bold">
+                      +{result.net} {result.scoringTeam === 1 ? team1Name : team2Name}
+                    </span>
+                  {:else}
+                    <span class="text-tp-cream/25">–</span>
+                  {/if}
+                </td>
+                <td class="py-1 px-2 text-right text-tp-white font-bold tabular-nums">{running.score1} – {running.score2}</td>
+              </tr>
+            {/if}
           {/each}
         </tbody>
       </table>

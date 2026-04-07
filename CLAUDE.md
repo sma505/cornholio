@@ -68,7 +68,7 @@ Double-elim bye resolution: Non-power-of-2 team counts produce byes in the loser
 - **Cancellation scoring**: 3pts for hole, 1pt for board, only net differential counts per frame
 - **Two entry modes** (set at tournament creation, not changeable during play):
   - **Total**: Enter final cancelled scores directly
-  - **Frame-by-frame**: Enter raw points per team per frame with live cancellation preview
+  - **Frame-by-frame**: Enter raw points per team per frame with live cancellation preview. Undo last frame, click any frame row to inline-edit. Game completion shows confirmation gate (Confirm Result / Undo) before finalizing — prevents accidental irreversible bracket advancement.
 - **Scoring mode**: Configured in TournamentSetup via `defaultScoringMode` setting ('quick' = Total, 'frames' = Frame-by-frame). Explanation hint shown inline on setup page.
 - **Draw support** (quick mode): Standings use football-style points (3W/1D/0L), sorted by points → wins → differential
 
@@ -125,7 +125,7 @@ src/
       PlayerEntry.svelte              # Add/remove/rename players, inline editing, format-aware min validation
       TeamPairing.svelte              # Drag-drop or shuffle into teams of 2 (teams only)
       GamePlay.svelte                 # Score entry, standings, centered bracket, court tabs
-      FrameScorer.svelte              # Frame-by-frame raw points entry with running totals
+      FrameScorer.svelte              # Frame-by-frame scoring: entry, undo, inline edit, confirmation gate
       Results.svelte                  # Champion display, bracket recap, export, celebration
       ui/CornholioHeader.svelte       # Header with step nav, format/mode label, help button
       ui/HelpModal.svelte             # Tabbed help: scoring, formats, game modes, settings
